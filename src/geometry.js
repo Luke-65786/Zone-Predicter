@@ -1,9 +1,11 @@
 export const MAP_SIZE = 1000;
+export const ZONE1_RADIUS = MAP_SIZE * 0.32;
+export const ZONE_RADIUS_RATIO = 0.6;
 
 export const DEFAULT_SETUP = Object.freeze({
-  circle: Object.freeze({ x: 500, y: 470, radius: 310 }),
+  circle: Object.freeze({ x: 500, y: 470, radius: ZONE1_RADIUS }),
   player: Object.freeze({ x: 315, y: 650 }),
-  ratio: 0.65,
+  ratio: ZONE_RADIUS_RATIO,
   hasZone1: false,
 });
 
@@ -17,6 +19,33 @@ export function fitCircle(circle) {
     x: clamp(circle.x, radius, MAP_SIZE - radius),
     y: clamp(circle.y, radius, MAP_SIZE - radius),
     radius,
+  };
+}
+
+export function fitZone1(position) {
+  return fitCircle({ ...position, radius: ZONE1_RADIUS });
+}
+
+// Short-rotation heuristic: the side pointing away from the previous center
+// has less space between the new and old edges. It is only a geometric proxy
+// for deadside, not measured player traffic. Near-centered pulls have no
+// meaningful preferred side, so do not invent a red/green direction for them.
+export function estimateZoneSides(previous, next) {
+  const dx = next.x - previous.x;
+  const dy = next.y - previous.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance <= previous.radius * 0.05) return null;
+  const direction = { x: dx / distance, y: dy / distance };
+  return {
+    angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+    deadside: {
+      x: next.x + direction.x * next.radius * 0.6,
+      y: next.y + direction.y * next.radius * 0.6,
+    },
+    congested: {
+      x: next.x - direction.x * next.radius * 0.6,
+      y: next.y - direction.y * next.radius * 0.6,
+    },
   };
 }
 
@@ -127,19 +156,17 @@ export function restoreSetup(raw) {
     const numbers = [
       setup.circle?.x,
       setup.circle?.y,
-      setup.circle?.radius,
       setup.player?.x,
       setup.player?.y,
-      setup.ratio,
     ];
     if (!numbers.every(Number.isFinite)) return null;
     return {
-      circle: fitCircle(setup.circle),
+      circle: fitZone1(setup.circle),
       player: {
         x: clamp(setup.player.x, 0, MAP_SIZE),
         y: clamp(setup.player.y, 0, MAP_SIZE),
       },
-      ratio: clamp(setup.ratio, 0.2, 0.9),
+      ratio: ZONE_RADIUS_RATIO,
       hasZone1: setup.hasZone1 === true,
     };
   } catch {

@@ -23,22 +23,29 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 
 - Use the map image selected by the user: `https://fortnite-api.com/images/map_en.png`. The GitHub Pages workflow downloads and bundles this PNG with the site. No map API is used. Local development falls back to the selected image URL when the bundled file is absent.
 - Dark theme throughout, including controls, map overlays, results, exports controls, notifications, help, and browser form controls. The map image retains its original colors.
-- Place zone 1's center and adjust its radius to match your in-game first circle. Set your player marker optionally.
-- Estimate zone 4 with 2,000 paths, each simulating zones 2, 3, and 4 sequentially. Circle sizes use the adjustable assumed radius retention (65% per zone by default).
+- Place zone 1's center. Its radius is locked at 32% of map width, and radius retention is locked at 60% per subsequent zone. There are no radius or shrink sliders. Set your player marker optionally.
+- Estimate zone 4 with 2,000 paths, each simulating zones 2, 3, and 4 sequentially. Circle sizes use the fixed 60% radius retention for each of the three transitions.
 - View zone 4 center density, the boundary containing 80% of simulated centers, and a representative fully nested path. Toggle intermediate zones 2 and 3 and the direct rotation route.
-- Export the annotated map and zone estimates as a standalone SVG with the provider image embedded.
-- Zone 1 setup persists in local storage. Changing its center, radius, or assumed shrink clears the previous estimate; generate again to recompute it.
+- Toggle the zone 4 deadside/congestion filter: green marks the estimated short-rotation half; red marks the half facing the simulated zone 3 center. The filter is off initially and includes an explicit no-live-player-data explanation.
+- Export the annotated map and zone estimates as a standalone SVG, including the selected image and any enabled deadside/congestion overlay and legend.
+- Zone 1 setup persists in local storage. Moving its center clears the previous estimate and its side overlay; generate again to recompute them. Legacy browser settings are normalized to the locked 32% radius and 60% retention on restore, while preserving a valid center and player position.
 - Use the map with a pointer, touch, or arrow keys. Shift + arrow moves in larger steps. Numeric zone 1 position controls are under “Fine-tune placement.”
 
 ## What the model means
 
 This is a manual geometric scenario tool using the specific map image selected by the user. It does not fetch a map from an API or automatically choose a newer island. It does not identify your match or game mode and has no match telemetry, hidden storm data, or connection to Epic's game servers.
 
-For each simulated path, each next circle's center is sampled uniformly by area from the disk of radius `previousRadius - nextRadius`. Every next circle stays inside its immediate predecessor. The radius ratio is applied three times, so `zone4Radius = zone1Radius × ratio³`. The default 65% ratio is an editable modeling assumption, not verified Fortnite storm data. Moving zones, terrain, and opponents are not modeled.
+For each simulated path, each next circle's center is sampled uniformly by area from the disk of radius `previousRadius - nextRadius`. Every next circle stays inside its immediate predecessor. The radius ratio is applied three times, so `zone4Radius = zone1Radius × ratio³`. The requested radius is 320 in the 1,000-unit map coordinate system and the fixed retention is 0.6. This gives a zone 4 radius of `320 × 0.6³ = 69.12` units (6.912% of map width). These are fixed modeling assumptions, not verified Fortnite storm data. Moving zones, terrain, and opponents are not modeled.
 
-Green cells show the frequency of simulated zone 4 centers. The dashed green boundary is centered on their mean and uses the empirical 80th percentile of center distances. **80% coverage describes the simulations, not a calibrated probability for a real match.** The blue zone 4 belongs to the sampled path whose final center is closest to the simulation mean; the optional zones 2 and 3 are from that same path.
+Cyan cells show the frequency of simulated zone 4 centers. The dashed cyan boundary is centered on their mean and uses the empirical 80th percentile of center distances. **80% coverage describes the simulations, not a calibrated probability for a real match.** The blue zone 4 belongs to the sampled path whose final center is closest to the simulation mean; the optional zones 2 and 3 are from that same path.
 
 The rotation line ends slightly inside the representative zone 4 using a straight-line geometric route. Distances use map-width percentages, not in-game meters. Zone 1 alone cannot reveal the actual future zone 4.
+
+## Deadside and congestion estimates
+
+The optional filter uses the representative path's simulated zone 3 and zone 4 circles. The half of zone 4 pointing **away from the zone 3 center**, toward the nearer old-zone edge, is colored green as estimated deadside. The opposite half points toward the zone 3 center and is colored red as estimated congestion. A dashed divider and text legend distinguish the halves; the center-density layer is cyan so green is reserved for deadside.
+
+This short-rotation heuristic does not observe player counts, landing spots, terrain, routes, or live match positions. The reference zone 3 is itself simulated, not supplied by a live match. It cannot establish the actual deadside or traffic in a game. When the centers differ by no more than 5% of zone 3's radius, the UI reports that there is no clear preferred side and leaves the estimate uncolored. The filter can be toggled with a pointer or keyboard; it follows newly generated forecasts and clears on reset.
 
 ## Selected map image
 

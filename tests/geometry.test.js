@@ -8,6 +8,10 @@ import {
   DEFAULT_SETUP,
   sampleZonePath,
   forecastZone4,
+  fitZone1,
+  ZONE1_RADIUS,
+  ZONE_RADIUS_RATIO,
+  estimateZoneSides,
 } from "../src/geometry.js";
 
 test("every sampled next circle stays inside the current circle", () => {
@@ -15,9 +19,10 @@ test("every sampled next circle stays inside the current circle", () => {
     for (let i = 0; i < 500; i++) {
       const next = sampleNextCircle(DEFAULT_SETUP.circle, ratio);
       assert.ok(
-        Math.hypot(next.x - 500, next.y - 470) + next.radius <= 310 + 1e-8,
+        Math.hypot(next.x - 500, next.y - 470) + next.radius <=
+          DEFAULT_SETUP.circle.radius + 1e-8,
       );
-      assert.equal(next.radius, 310 * ratio);
+      assert.equal(next.radius, DEFAULT_SETUP.circle.radius * ratio);
     }
   }
 });
@@ -70,7 +75,8 @@ test("saved setup restores, sanitizes limits, and rejects malformed data", () =>
       player: { x: -100, y: 2000 },
     }),
   );
-  assert.equal(setup.ratio, 0.2);
+  assert.equal(setup.ratio, ZONE_RADIUS_RATIO);
+  assert.equal(setup.circle.radius, ZONE1_RADIUS);
   assert.deepEqual(setup.player, { x: 0, y: 1000 });
 });
 
@@ -148,4 +154,64 @@ test("80% coverage uses the empirical 80th percentile of simulated centers", () 
   assert.equal(forecast.coverageRadius, 32);
   assert.deepEqual(forecast.center, { x: 532, y: 500 });
   assert.equal(forecast.path[3].x, 530);
+});
+
+test("zone 1 placement and legacy settings keep the requested fixed radius and shrink", () => {
+  assert.deepEqual(fitZone1({ x: -100, y: 1000, radius: 50 }), {
+    x: 320,
+    y: 680,
+    radius: 320,
+  });
+  const restored = restoreSetup(
+    JSON.stringify({
+      circle: { x: 100, y: 900, radius: 75 },
+      ratio: 0.9,
+      hasZone1: true,
+      player: { x: 350, y: 500 },
+    }),
+  );
+  assert.deepEqual(restored.circle, { x: 320, y: 680, radius: 320 });
+  assert.equal(restored.ratio, 0.6);
+  assert.equal(restored.hasZone1, true);
+  const zone4 = forecastZone4(restored.circle, restored.ratio, () => 0.25, 10)
+    .path[3];
+  assert.ok(Math.abs(zone4.radius - 69.12) < 1e-8);
+});
+
+test("deadside points toward the nearer old-zone edge, congestion toward its center in every quadrant", () => {
+  const previous = { x: 500, y: 500, radius: 150 };
+  for (const [dx, dy] of [
+    [40, 0],
+    [-40, 0],
+    [0, 40],
+    [0, -40],
+    [25, 30],
+    [-25, -30],
+  ]) {
+    const next = { x: 500 + dx, y: 500 + dy, radius: 80 };
+    const sides = estimateZoneSides(previous, next);
+    assert.ok(sides);
+    const oldEdgeGap = (point) =>
+      previous.radius - Math.hypot(point.x - previous.x, point.y - previous.y);
+    assert.ok(oldEdgeGap(sides.deadside) < oldEdgeGap(sides.congested));
+    for (const point of [sides.deadside, sides.congested]) {
+      assert.ok(Math.hypot(point.x - next.x, point.y - next.y) < next.radius);
+    }
+    const radians = (sides.angle * Math.PI) / 180;
+    assert.ok(Math.abs(Math.cos(radians) - dx / Math.hypot(dx, dy)) < 1e-8);
+    assert.ok(Math.abs(Math.sin(radians) - dy / Math.hypot(dx, dy)) < 1e-8);
+  }
+});
+
+test("centered and almost-centered zones do not invent a deadside direction", () => {
+  const previous = { x: 500, y: 500, radius: 150 };
+  assert.equal(
+    estimateZoneSides(previous, { x: 500, y: 500, radius: 90 }),
+    null,
+  );
+  assert.equal(
+    estimateZoneSides(previous, { x: 503, y: 502, radius: 90 }),
+    null,
+  );
+  assert.ok(estimateZoneSides(previous, { x: 510, y: 500, radius: 90 }));
 });

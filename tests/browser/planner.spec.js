@@ -49,8 +49,9 @@ test("auto-loads the bundled map without external requests and estimates zone 4 
     page.getByRole("button", { name: "Estimate zone 4" }),
   ).toBeDisabled();
   await placeZone1(page);
-  await page.locator("#next-size").fill("65");
-  await page.locator("#circle-size").fill("25");
+  await expect(page.getByRole("slider")).toHaveCount(0);
+  await expect(page.getByTestId("fixed-zone1-radius")).toHaveText("32%");
+  await expect(page.getByTestId("fixed-zone-shrink")).toHaveText("60%");
   await page.getByRole("button", { name: "Estimate zone 4" }).click();
   await expect(page.getByTestId("zone-4")).toBeVisible();
   await expect(page.getByText("2,000", { exact: true })).toBeVisible();
@@ -67,7 +68,7 @@ test("auto-loads the bundled map without external requests and estimates zone 4 
       })),
     );
   }
-  expect(circles[3].radius).toBeCloseTo(250 * 0.65 ** 3, 8);
+  expect(circles[3].radius).toBeCloseTo(320 * 0.6 ** 3, 8);
   for (let zone = 1; zone < 4; zone++) {
     expect(
       Math.hypot(
@@ -76,15 +77,23 @@ test("auto-loads the bundled map without external requests and estimates zone 4 
       ) + circles[zone].radius,
     ).toBeLessThanOrEqual(circles[zone - 1].radius + 0.001);
   }
-  await page.locator("#circle-size").fill("30");
+  await page.getByText("Fine-tune placement", { exact: true }).click();
+  await page.getByLabel("Zone 1 X position percent").fill("60");
   await expect(page.getByTestId("zone-4")).toHaveCount(0);
   await page.getByRole("button", { name: "Estimate zone 4" }).click();
-  await expect(page.getByTestId("zone-4")).toHaveAttribute(
-    "r",
-    String(300 * 0.65 * 0.65 * 0.65),
+  expect(+(await page.getByTestId("zone-4").getAttribute("r"))).toBeCloseTo(
+    69.12,
+    8,
   );
   await page.reload();
-  await expect(page.locator("#circle-size")).toHaveValue("30");
+  await expect(page.getByTestId("fixed-zone1-radius")).toHaveText("32%");
+  await expect(page.getByTestId("fixed-zone-shrink")).toHaveText("60%");
+  const saved = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("zoneiq-setup-v2")),
+  );
+  expect(saved.circle.x).toBe(600);
+  expect(saved.circle.radius).toBe(320);
+  expect(saved.ratio).toBe(0.6);
   await expect(
     page.getByRole("button", { name: "Estimate zone 4" }),
   ).toBeEnabled();
@@ -132,7 +141,13 @@ test("placement, keyboard controls, intermediate zones, heat layer, and reset wo
 test("export includes the selected map and zone 4 without external image dependencies", async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0.25;
+  });
   await openPlanner(page);
+  await page
+    .getByRole("switch", { name: "Deadside and congestion overlay" })
+    .click();
   await placeZone1(page);
   await page.getByRole("button", { name: "Estimate zone 4" }).click();
   const downloadEvent = page.waitForEvent("download");
@@ -146,6 +161,10 @@ test("export includes the selected map and zone 4 without external image depende
   expect(svg).not.toContain("blob:");
   expect(svg).toContain("ZONE 4 ESTIMATE");
   expect(svg).toContain("not a live prediction");
+  expect(svg).toContain("estimated deadside");
+  expect(svg).toContain("estimated congestion");
+  expect(svg).toContain("#45df92");
+  expect(svg).toContain("#fa6478");
 });
 
 test("image failure shows a clear error and can be retried", async ({
@@ -229,4 +248,80 @@ test("uses the exact supplied image URL when a local bundle is not present", asy
   await placeZone1(page);
   await page.getByRole("button", { name: "Estimate zone 4" }).click();
   await expect(page.getByTestId("zone-4")).toBeVisible();
+});
+
+test("old browser settings cannot change the locked percentages after restore or reset", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "zoneiq-setup-v2",
+      JSON.stringify({
+        circle: { x: 500, y: 470, radius: 80 },
+        ratio: 0.9,
+        player: { x: 315, y: 650 },
+        hasZone1: true,
+      }),
+    ),
+  );
+  await openPlanner(page);
+  await expect(page.getByRole("slider")).toHaveCount(0);
+  await expect(page.getByTestId("fixed-zone1-radius")).toHaveText("32%");
+  await expect(page.getByTestId("fixed-zone-shrink")).toHaveText("60%");
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  expect(+(await page.getByTestId("zone-4").getAttribute("r"))).toBeCloseTo(
+    69.12,
+    8,
+  );
+  await page.getByRole("button", { name: "Reset planner" }).click();
+  await expect(page.getByTestId("fixed-zone1-radius")).toHaveText("32%");
+  await expect(page.getByTestId("fixed-zone-shrink")).toHaveText("60%");
+});
+
+test("deadside filter toggles green/red zone 4 regions, clears stale sides, and follows the new estimate", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0.25;
+  });
+  await openPlanner(page);
+  await placeZone1(page);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await expect(page.getByTestId("zone-sides-overlay")).toHaveCount(0);
+  const toggle = page.getByRole("switch", {
+    name: "Deadside and congestion overlay",
+  });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("deadside-region")).toHaveAttribute(
+    "fill",
+    "#45df92",
+  );
+  await expect(page.getByTestId("congested-region")).toHaveAttribute(
+    "fill",
+    "#fa6478",
+  );
+  await expect(
+    page.getByText("This estimates rotation pressure, not player counts.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  const previous = await page
+    .getByTestId("zone-sides-overlay")
+    .getAttribute("transform");
+  await toggle.click();
+  await expect(page.getByTestId("zone-sides-overlay")).toHaveCount(0);
+  await toggle.focus();
+  await page.keyboard.press("Space");
+  await expect(page.getByTestId("zone-sides-overlay")).toBeVisible();
+  await page.getByRole("application").focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByTestId("zone-sides-overlay")).toHaveCount(0);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await expect(page.getByTestId("zone-sides-overlay")).not.toHaveAttribute(
+    "transform",
+    previous,
+  );
+  await page.getByRole("button", { name: "Reset planner" }).click();
+  await expect(toggle).toHaveAttribute("aria-checked", "false");
 });

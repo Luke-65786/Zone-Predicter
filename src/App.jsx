@@ -11,6 +11,8 @@ import {
   Flag,
   Info,
   Layers2,
+  LockKeyhole,
+  Users,
   LocateFixed,
   Map,
   MapPin,
@@ -23,13 +25,17 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import ZoneSides from "./ZoneSides.jsx";
 import useCurrentMap from "./useCurrentMap.js";
 import { MAP_SOURCE_URL } from "./map-source.js";
 import {
   DEFAULT_SETUP,
   MAP_SIZE,
   clamp,
-  fitCircle,
+  fitZone1,
+  ZONE1_RADIUS,
+  ZONE_RADIUS_RATIO,
+  estimateZoneSides,
   planRotation,
   restoreSetup,
   forecastZone4,
@@ -53,6 +59,7 @@ function App() {
   const [tool, setTool] = useState("circle");
   const [showHeat, setShowHeat] = useState(true);
   const [showRoute, setShowRoute] = useState(true);
+  const [showSides, setShowSides] = useState(false);
   const map = useCurrentMap();
   const mapImage = map.url;
   const mapName =
@@ -71,6 +78,9 @@ function App() {
   const dragging = useRef(false);
   const scenario = forecast?.path[3];
   const rotation = scenario ? planRotation(setup.player, scenario) : null;
+  const zoneSides = forecast
+    ? estimateZoneSides(forecast.path[2], scenario)
+    : null;
 
   useEffect(() => {
     try {
@@ -117,7 +127,12 @@ function App() {
   }, [help]);
 
   function changeSetup(patch) {
-    const next = { ...setup, ...patch };
+    const next = {
+      ...setup,
+      ...patch,
+      circle: fitZone1(patch.circle || setup.circle),
+      ratio: ZONE_RADIUS_RATIO,
+    };
     setSetup(next);
     if (patch.circle || patch.ratio) {
       setForecast(null);
@@ -126,13 +141,13 @@ function App() {
   }
   function generate() {
     if (!setup.hasZone1 || map.status !== "ready") return;
-    setForecast(forecastZone4(setup.circle, setup.ratio));
+    setForecast(forecastZone4(fitZone1(setup.circle), ZONE_RADIUS_RATIO));
     setRunCount((value) => value + 1);
   }
   function updatePosition(x, y) {
     if (tool === "circle")
       changeSetup({
-        circle: fitCircle({ ...setup.circle, x, y }),
+        circle: fitZone1({ ...setup.circle, x, y }),
         hasZone1: true,
       });
     else
@@ -173,6 +188,7 @@ function App() {
     setShowHeat(true);
     setShowRoute(true);
     setShowSteps(true);
+    setShowSides(false);
     setToast("Zone 1 cleared. Click the map to start a new estimate.");
   }
   async function fullscreen() {
@@ -203,6 +219,14 @@ function App() {
       title.textContent =
         "ZoneIQ · Zone 1 → Zone 4 · Geometric simulation, not a live prediction";
       svg.appendChild(title);
+      if (showSides && zoneSides) {
+        const legend = title.cloneNode(true);
+        legend.setAttribute("y", "951");
+        legend.setAttribute("font-size", "14");
+        legend.textContent =
+          "Green: estimated deadside · Red: estimated congestion · Zone 3 → 4 geometry, no live player data";
+        svg.appendChild(legend);
+      }
       const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
         type: "image/svg+xml",
       });
@@ -399,64 +423,64 @@ function App() {
                   {tool === "circle" ? "zone 1’s center" : "your marker"}.
                 </p>
               </div>
-              <div className="control-section range-section">
-                <div className="field-heading">
-                  <label htmlFor="circle-size">Zone 1 radius</label>
-                  <span className="number-value">
-                    {Math.round(setup.circle.radius / 10)}
-                    <small>% of map</small>
+              <div className="control-section fixed-setting-section">
+                <div className="locked-setting">
+                  <div>
+                    <span>Zone 1 radius</span>
+                    <small>Of map width</small>
+                  </div>
+                  <strong data-testid="fixed-zone1-radius">
+                    {ZONE1_RADIUS / 10}%
+                  </strong>
+                  <span className="locked-badge">
+                    <LockKeyhole size={12} /> Fixed
                   </span>
-                </div>
-                <input
-                  id="circle-size"
-                  type="range"
-                  min="5"
-                  max="50"
-                  step="1"
-                  value={Math.round(setup.circle.radius / 10)}
-                  style={{
-                    "--progress": `${((setup.circle.radius / 10 - 5) / 45) * 100}%`,
-                  }}
-                  onChange={(event) =>
-                    changeSetup({
-                      circle: fitCircle({
-                        ...setup.circle,
-                        radius: +event.target.value * 10,
-                      }),
-                    })
-                  }
-                />
-                <div className="range-labels">
-                  <span>Smaller</span>
-                  <span>Larger</span>
                 </div>
               </div>
-              <div className="control-section range-section">
-                <div className="field-heading">
-                  <label htmlFor="next-size">Assumed shrink per zone</label>
-                  <span className="number-value">
-                    {Math.round(setup.ratio * 100)}
-                    <small>% retained</small>
+              <div className="control-section fixed-setting-section">
+                <div className="locked-setting">
+                  <div>
+                    <span>Shrink per zone</span>
+                    <small>Radius retained each zone</small>
+                  </div>
+                  <strong data-testid="fixed-zone-shrink">
+                    {ZONE_RADIUS_RATIO * 100}%
+                  </strong>
+                  <span className="locked-badge">
+                    <LockKeyhole size={12} /> Fixed
                   </span>
                 </div>
-                <input
-                  id="next-size"
-                  type="range"
-                  min="20"
-                  max="90"
-                  step="5"
-                  value={Math.round(setup.ratio * 100)}
-                  style={{
-                    "--progress": `${((setup.ratio * 100 - 20) / 70) * 100}%`,
-                  }}
-                  onChange={(event) =>
-                    changeSetup({ ratio: +event.target.value / 100 })
-                  }
-                />
-                <div className="range-labels">
-                  <span>Smaller</span>
-                  <span>Larger</span>
+              </div>
+              <div className="control-section zone-filter-section">
+                <div className="field-heading">
+                  <label>Zone 4 filter</label>
+                  <span className="tiny-tag">ESTIMATED</span>
                 </div>
+                <button
+                  className="sides-filter"
+                  role="switch"
+                  aria-label="Deadside and congestion overlay"
+                  aria-checked={showSides}
+                  onClick={() => setShowSides((value) => !value)}
+                >
+                  <Users size={17} />
+                  <span>Deadside &amp; congestion</span>
+                  <span className="switch-track">
+                    <span />
+                  </span>
+                </button>
+                <div className="sides-key">
+                  <span>
+                    <i className="deadside-dot" /> Green · deadside
+                  </span>
+                  <span>
+                    <i className="congested-dot" /> Red · congested
+                  </span>
+                </div>
+                <p className="field-note">
+                  Estimated from the simulated zone 3 → 4 shift. No live player
+                  locations.
+                </p>
               </div>
               <details className="fine-tune">
                 <summary>
@@ -476,7 +500,7 @@ function App() {
                           if (event.target.value !== "")
                             changeSetup({
                               hasZone1: true,
-                              circle: fitCircle({
+                              circle: fitZone1({
                                 ...setup.circle,
                                 [axis]: +event.target.value * 10,
                               }),
@@ -673,7 +697,7 @@ function App() {
                           width={forecast.cellSize}
                           height={forecast.cellSize}
                           rx="6"
-                          fill="#7af1b8"
+                          fill="#69d8ff"
                           fillOpacity={0.08 + cell.intensity * 0.65}
                         />
                       ))}
@@ -682,7 +706,7 @@ function App() {
                         cy={forecast.center.y}
                         r={forecast.coverageRadius}
                         fill="none"
-                        stroke="#d8ffb7"
+                        stroke="#b3ecff"
                         strokeWidth="2.5"
                         strokeDasharray="5 7"
                       />
@@ -718,6 +742,9 @@ function App() {
                         strokeWidth="4"
                         strokeDasharray="11 8"
                       />
+                      {showSides && (
+                        <ZoneSides circle={scenario} sides={zoneSides} />
+                      )}
                       <circle
                         cx={scenario.x}
                         cy={scenario.y}
@@ -856,7 +883,7 @@ function App() {
                   <MousePointer2 size={13} />
                   <span>
                     {tool === "circle"
-                      ? "Click the center of zone 1, then set its size"
+                      ? "Click the center of zone 1 · radius fixed at 32%"
                       : "Click the map to place your position"}
                   </span>
                 </div>
@@ -904,6 +931,32 @@ function App() {
               </div>
             </div>
 
+            {forecast && showSides && (
+              <div className="sides-explanation" role="status">
+                {zoneSides ? (
+                  <>
+                    <div className="sides-key">
+                      <span>
+                        <i className="deadside-dot" /> Estimated deadside
+                      </span>
+                      <span>
+                        <i className="congested-dot" /> Estimated congestion
+                      </span>
+                    </div>
+                    <p>
+                      Green faces the nearest edge of simulated zone 3; red
+                      faces its center. This estimates rotation pressure, not
+                      player counts.
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    Zones 3 and 4 are nearly centered, so there is no clear
+                    deadside or congested side to color.
+                  </p>
+                )}
+              </div>
+            )}
             {forecast && (
               <div className="forecast-summary" aria-live="polite">
                 <div>
@@ -942,8 +995,8 @@ function App() {
                 </h3>
                 <p>
                   {!forecast
-                    ? "Click zone 1’s center, adjust its radius, and select Estimate zone 4."
-                    : "The dashed green boundary contains 80% of simulated centers. The blue circle is one representative path, not an 80% match prediction."}
+                    ? "Click zone 1’s center, then select Estimate zone 4. Its radius is fixed at 32%."
+                    : "The dashed cyan boundary contains 80% of simulated centers. The blue circle is one representative path, not an 80% match prediction."}
                 </p>
               </div>
               {rotation && (
@@ -974,8 +1027,8 @@ function App() {
             <div className="map-footnote">
               <Info size={13} />
               <p>
-                Three sequential, fully nested circles using your shrink
-                assumption. Model coverage is not real-match accuracy.{" "}
+                Zone 1 radius: 32% of map width. Each next radius: 60% of the
+                previous zone. Model coverage is not real-match accuracy.{" "}
                 {storageWarning
                   ? "Browser storage is unavailable; settings will reset on reload."
                   : "Your zone 1 setup stays in this browser."}
@@ -997,8 +1050,8 @@ function App() {
               <div>
                 <h3>Enter zone 1</h3>
                 <p>
-                  Your selected map loads automatically. Place zone 1’s center
-                  and match the white circle’s size.
+                  Your selected map loads automatically. Place zone 1’s center;
+                  its radius stays fixed at 32% of the map width.
                 </p>
               </div>
               <span className="tip-number">01</span>
@@ -1099,21 +1152,29 @@ function App() {
                 a newer season or detect your match automatically.
               </li>
               <li>
-                <strong>Enter zone 1.</strong> Click its center and adjust the
-                radius to match your first circle. You can also place your
-                player marker.
+                <strong>Enter zone 1.</strong> Click its center. Its radius is
+                locked to 32% of map width. You can also place your player
+                marker.
               </li>
               <li>
                 <strong>Estimate zone 4.</strong> The model simulates 2,000
                 paths from zone 1 through zones 2 and 3 to zone 4. The same
-                assumed radius ratio is applied three times. Adjust it for your
-                scenario; it is not verified storm data.
+                radius retention is locked to 60% and applied three times. These
+                fixed settings are modeling assumptions, not verified storm
+                data.
               </li>
               <li>
-                <strong>Read the spread.</strong> Green cells show the frequency
+                <strong>Read the spread.</strong> Cyan cells show the frequency
                 of simulated zone 4 centers; the dashed boundary covers 80% of
                 them. The blue zone 4 is from a representative sampled path. The
                 route ignores terrain and opponents.
+              </li>
+              <li>
+                <strong>Show deadside and congestion.</strong> Turn on the Zone
+                4 filter. Green is the short-rotation half pointing away from
+                simulated zone 3’s center; red faces the zone 3 center. Nearly
+                centered pulls are left uncolored. This is a geometric estimate
+                without live player data.
               </li>
             </ol>
             <div className="model-note">
