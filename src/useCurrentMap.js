@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { loadCurrentMap } from "./map-source.js";
+import { BUNDLED_MAP_PATH, MAP_SOURCE_URL } from "./map-source.js";
 
 export default function useCurrentMap() {
   const [revision, setRevision] = useState(0);
@@ -9,29 +9,44 @@ export default function useCurrentMap() {
     loadedAt: null,
   });
   useEffect(() => {
-    const controller = new AbortController();
-    let url;
     let active = true;
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const urls = [import.meta.env.BASE_URL + BUNDLED_MAP_PATH, MAP_SOURCE_URL];
+    let currentImage;
+    let timeout;
     setMap({ status: "loading", url: null, loadedAt: null });
-    loadCurrentMap({ signal: controller.signal })
-      .then(async (result) => {
+    function load(index) {
+      if (!active) return;
+      if (index >= urls.length) {
+        setMap({ status: "error", url: null, loadedAt: null });
+        return;
+      }
+      const image = new Image();
+      currentImage = image;
+      let settled = false;
+      function done(success) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        image.onload = image.onerror = null;
         if (!active) return;
-        url = URL.createObjectURL(result.blob);
-        const image = new Image();
-        image.src = url;
-        await image.decode();
-        if (active) setMap({ status: "ready", url, loadedAt: result.loadedAt });
-      })
-      .catch(() => {
-        if (active) setMap({ status: "error", url: null, loadedAt: null });
-      })
-      .finally(() => clearTimeout(timeout));
+        if (success && image.naturalWidth && image.naturalHeight) {
+          setMap({
+            status: "ready",
+            url: urls[index],
+            loadedAt: new Date().toISOString(),
+          });
+        } else load(index + 1);
+      }
+      image.onload = () => done(true);
+      image.onerror = () => done(false);
+      timeout = setTimeout(() => done(false), 15000);
+      image.src = urls[index];
+    }
+    load(0);
     return () => {
       active = false;
-      controller.abort();
       clearTimeout(timeout);
-      if (url) URL.revokeObjectURL(url);
+      if (currentImage) currentImage.onload = currentImage.onerror = null;
     };
   }, [revision]);
   const refresh = useCallback(() => setRevision((value) => value + 1), []);

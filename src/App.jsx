@@ -57,9 +57,9 @@ function App() {
   const mapImage = map.url;
   const mapName =
     map.status === "ready"
-      ? "Fortnite Battle Royale"
+      ? "Your Fortnite map"
       : map.status === "loading"
-        ? "Loading latest map…"
+        ? "Loading your map…"
         : "Map unavailable";
   const [showSteps, setShowSteps] = useState(true);
   const [help, setHelp] = useState(false);
@@ -279,8 +279,8 @@ function App() {
               Zone 1 in. <span>Zone 4 outlook.</span>
             </h1>
             <p>
-              Mark the first circle on the latest provider map. Explore where
-              zone 4 could land.
+              Mark the first circle on your selected map. Explore where zone 4
+              could land.
             </p>
           </div>
           <button
@@ -314,15 +314,15 @@ function App() {
                     <strong>{mapName}</strong>
                     <span>
                       {map.status === "ready"
-                        ? "Latest provider image · no upload"
+                        ? "Your selected image · no API"
                         : map.status === "loading"
-                          ? "Contacting Fortnite-API…"
+                          ? "Opening the selected image…"
                           : "Check your connection and retry"}
                     </span>
                   </div>
                   <button
                     className="icon-button"
-                    aria-label="Refresh latest map"
+                    aria-label="Reload map image"
                     disabled={map.status === "loading"}
                     onClick={map.refresh}
                   >
@@ -330,11 +330,10 @@ function App() {
                   </button>
                 </div>
                 <p className="field-note">
-                  Map by{" "}
+                  <span>Your selected map. </span>
                   <a href={MAP_SOURCE_URL} target="_blank" rel="noreferrer">
-                    Fortnite-API <ArrowUpRight size={10} />
+                    Open original image <ArrowUpRight size={10} />
                   </a>
-                  . Provider updates may lag the game.
                 </p>
               </div>
               <div className="control-section">
@@ -503,7 +502,7 @@ function App() {
                 </button>
                 <span>
                   {map.status !== "ready"
-                    ? "The latest map must load first"
+                    ? "Your map image must load first"
                     : !setup.hasZone1
                       ? "Click the map to place zone 1 first"
                       : "Geometric estimates · not guaranteed game zones"}
@@ -535,7 +534,7 @@ function App() {
                   <span className="practice-tag">
                     <span />
                     {map.status === "ready"
-                      ? "PROVIDER MAP"
+                      ? "SELECTED MAP"
                       : map.status === "loading"
                         ? "LOADING MAP"
                         : "MAP OFFLINE"}
@@ -866,13 +865,13 @@ function App() {
                     <Map size={36} />
                     <h3>
                       {map.status === "loading"
-                        ? "Loading the latest map…"
-                        : "The latest map couldn’t load"}
+                        ? "Loading your map…"
+                        : "Your map image couldn’t load"}
                     </h3>
                     <p>
                       {map.status === "loading"
-                        ? "Fetching the Battle Royale map from Fortnite-API."
-                        : "Check your connection or map-provider access. We won’t substitute an older or illustrative island."}
+                        ? "Opening the map image you selected."
+                        : "Check the selected image link or try loading it again."}
                     </p>
                     {map.status === "error" && (
                       <button
@@ -998,8 +997,8 @@ function App() {
               <div>
                 <h3>Enter zone 1</h3>
                 <p>
-                  The latest provider map loads automatically. Place zone 1’s
-                  center and match the white circle’s size.
+                  Your selected map loads automatically. Place zone 1’s center
+                  and match the white circle’s size.
                 </p>
               </div>
               <span className="tip-number">01</span>
@@ -1095,10 +1094,9 @@ function App() {
             </p>
             <ol>
               <li>
-                <strong>The map loads for you.</strong> The app requests
-                Fortnite-API’s latest Battle Royale map on opening. It does not
-                identify your match, mode, or island automatically; provider
-                updates can lag the game.
+                <strong>Your selected map loads for you.</strong> The app uses
+                the map image you supplied, with no map API. It does not select
+                a newer season or detect your match automatically.
               </li>
               <li>
                 <strong>Enter zone 1.</strong> Click its center and adjust the

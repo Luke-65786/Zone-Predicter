@@ -21,7 +21,8 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 
 ## Features
 
-- Automatically request Fortnite-API's maintained Battle Royale map at `https://media.fortnite-api.com/map_with_pois.png`. No photo upload or API key is required. Refresh on demand.
+- Use the map image selected by the user: `https://fortnite-api.com/images/map_en.png`. The GitHub Pages workflow downloads and bundles this PNG with the site. No map API is used. Local development falls back to the selected image URL when the bundled file is absent.
+- Dark theme throughout, including controls, map overlays, results, exports controls, notifications, help, and browser form controls. The map image retains its original colors.
 - Place zone 1's center and adjust its radius to match your in-game first circle. Set your player marker optionally.
 - Estimate zone 4 with 2,000 paths, each simulating zones 2, 3, and 4 sequentially. Circle sizes use the adjustable assumed radius retention (65% per zone by default).
 - View zone 4 center density, the boundary containing 80% of simulated centers, and a representative fully nested path. Toggle intermediate zones 2 and 3 and the direct rotation route.
@@ -31,7 +32,7 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 
 ## What the model means
 
-This is a manual geometric scenario tool. The map is the latest image available from the provider, whose updates may lag the game. The app does not identify your match or game mode and has no match telemetry, hidden storm data, or connection to Epic's game servers. It uses the Battle Royale map; other islands and modes are not inferred.
+This is a manual geometric scenario tool using the specific map image selected by the user. It does not fetch a map from an API or automatically choose a newer island. It does not identify your match or game mode and has no match telemetry, hidden storm data, or connection to Epic's game servers.
 
 For each simulated path, each next circle's center is sampled uniformly by area from the disk of radius `previousRadius - nextRadius`. Every next circle stays inside its immediate predecessor. The radius ratio is applied three times, so `zone4Radius = zone1Radius × ratio³`. The default 65% ratio is an editable modeling assumption, not verified Fortnite storm data. Moving zones, terrain, and opponents are not modeled.
 
@@ -39,11 +40,13 @@ Green cells show the frequency of simulated zone 4 centers. The dashed green bou
 
 The rotation line ends slightly inside the representative zone 4 using a straight-line geometric route. Distances use map-width percentages, not in-game meters. Zone 1 alone cannot reveal the actual future zone 4.
 
-## Map access
+## Selected map image
 
-The browser needs HTTPS access to `media.fortnite-api.com` and a provider response that allows cross-origin requests. Requests omit credentials and revalidate the image cache. The app checks the HTTP status, image type, nonempty size (maximum 20 MB), and browser image decoding before displaying a map. Loading failures show an error and retry button; an older or illustrative island is never presented as the current map. The original illustration is no longer used.
+`src/map-source.js` records the user-supplied image URL and bundled path. The deployment workflow runs `node scripts/download-map.mjs` to download the PNG over verified HTTPS into `public/maps/fortnite-map.png` before building. HTTP errors and unsupported PNG headers stop that deployment. The generated image is ignored by Git; it is included in the published `dist` artifact. Once published, the image is served by GitHub Pages alongside the application, so viewing it and exporting it require no third-party image or API request.
 
-In this cloud, the provider was blocked by the egress proxy (HTTP 403), so live map availability and freshness could not be verified here. `media.fortnite-api.com` was added to the environment configuration draft for review. Browser tests use explicit provider image fixtures and cover successful loading, failures, invalid images, and recovery. These tests do not establish live provider availability or real-match prediction accuracy.
+For local development you can run `node scripts/download-map.mjs` to bundle the image first. If the local image is absent, the browser loads the exact selected URL directly as an image (without requiring CORS for display). Standalone SVG export from this remote fallback requires the image host to allow a fetch; the bundled image avoids that restriction. Loading failures show an error and retry button.
+
+The original chat image was visible but its file was not mounted in the workspace. The user supplied the image URL above. This cloud's egress proxy returned HTTP 403 for that host, so the actual image download and its match to the attachment could not be verified here. The deployment runner downloads and verifies the PNG response before publishing. Browser tests use explicit image fixtures and cover local image loading, the exact remote URL fallback, error recovery, exports, and zone calculations. These fixtures do not verify the remote image's current contents.
 
 ## Browser tests
 

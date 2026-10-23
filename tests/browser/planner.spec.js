@@ -1,14 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { MAP_IMAGE_URL } from "../../src/map-source.js";
+import { MAP_SOURCE_URL } from "../../src/map-source.js";
+const bundledImage = "**/maps/fortnite-map.png";
 
-// Explicit provider fixtures make browser behavior reproducible; they do not
-// claim that the live provider or the current season's image was verified.
+// Explicit image fixtures test bundling, fallback, and failures without
+// claiming that the remotely hosted image itself was verified in this cloud.
 const mapPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aE7sAAAAASUVORK5CYII=",
   "base64",
 );
 async function mockMap(page) {
-  await page.route(MAP_IMAGE_URL, (route) =>
+  await page.route(bundledImage, (route) =>
     route.fulfill({
       status: 200,
       contentType: "image/png",
@@ -21,18 +22,27 @@ async function openPlanner(page) {
   await mockMap(page);
   await page.goto("/");
   await expect(
-    page.getByText("Fortnite Battle Royale", { exact: true }),
+    page.getByText("Your Fortnite map", { exact: true }),
   ).toBeVisible();
 }
 async function placeZone1(page) {
   await page.getByRole("application").click({ position: { x: 190, y: 190 } });
 }
 
-test("auto-loads the provider map and estimates zone 4 through three nested transitions", async ({
+test("auto-loads the bundled map without external requests and estimates zone 4 through three nested transitions", async ({
   page,
 }) => {
   const errors = [];
+  const externalRequests = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("request", (request) => {
+    if (
+      !request.url().startsWith("http://127.0.0.1:5173/") &&
+      !request.url().startsWith("blob:") &&
+      !request.url().startsWith("data:")
+    )
+      externalRequests.push(request.url());
+  });
   await openPlanner(page);
   await expect(page.locator("input[type=file]")).toHaveCount(0);
   await expect(
@@ -50,13 +60,11 @@ test("auto-loads the provider map and estimates zone 4 through three nested tran
   const circles = [setup.circle];
   for (const zone of [2, 3, 4]) {
     circles.push(
-      await page
-        .getByTestId(`zone-${zone}`)
-        .evaluate((node) => ({
-          x: +node.getAttribute("cx"),
-          y: +node.getAttribute("cy"),
-          radius: +node.getAttribute("r"),
-        })),
+      await page.getByTestId(`zone-${zone}`).evaluate((node) => ({
+        x: +node.getAttribute("cx"),
+        y: +node.getAttribute("cy"),
+        radius: +node.getAttribute("r"),
+      })),
     );
   }
   expect(circles[3].radius).toBeCloseTo(250 * 0.65 ** 3, 8);
@@ -81,6 +89,7 @@ test("auto-loads the provider map and estimates zone 4 through three nested tran
     page.getByRole("button", { name: "Estimate zone 4" }),
   ).toBeEnabled();
   expect(errors).toEqual([]);
+  expect(externalRequests).toEqual([]);
 });
 
 test("placement, keyboard controls, intermediate zones, heat layer, and reset work", async ({
@@ -116,11 +125,11 @@ test("placement, keyboard controls, intermediate zones, heat layer, and reset wo
     page.getByRole("button", { name: "Estimate zone 4" }),
   ).toBeDisabled();
   await expect(
-    page.getByText("Fortnite Battle Royale", { exact: true }),
+    page.getByText("Your Fortnite map", { exact: true }),
   ).toBeVisible();
 });
 
-test("export includes the provider map and zone 4 without external image dependencies", async ({
+test("export includes the selected map and zone 4 without external image dependencies", async ({
   page,
 }) => {
   await openPlanner(page);
@@ -139,30 +148,30 @@ test("export includes the provider map and zone 4 without external image depende
   expect(svg).toContain("not a live prediction");
 });
 
-test("provider failure shows an honest error and can be retried", async ({
+test("image failure shows a clear error and can be retried", async ({
   page,
 }) => {
-  await page.route(MAP_IMAGE_URL, (route) => route.abort("failed"));
+  await page.route(bundledImage, (route) => route.abort("failed"));
+  await page.route(MAP_SOURCE_URL, (route) => route.abort("failed"));
   await page.goto("/");
   await expect(
-    page.getByText("The latest map couldn’t load", { exact: true }),
+    page.getByText("Your map image couldn’t load", { exact: true }),
   ).toBeVisible();
   await expect(page.locator("[data-map-image]")).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Estimate zone 4" }),
   ).toBeDisabled();
-  await page.unroute(MAP_IMAGE_URL);
+  await page.unroute(bundledImage);
   await mockMap(page);
   await page.getByRole("button", { name: "Try again" }).click();
   await expect(
-    page.getByText("Fortnite Battle Royale", { exact: true }),
+    page.getByText("Your Fortnite map", { exact: true }),
   ).toBeVisible();
 });
 
-test("invalid provider image cannot be presented as a loaded map", async ({
-  page,
-}) => {
-  await page.route(MAP_IMAGE_URL, (route) =>
+test("invalid image cannot be presented as a loaded map", async ({ page }) => {
+  await page.route(MAP_SOURCE_URL, (route) => route.abort("failed"));
+  await page.route(bundledImage, (route) =>
     route.fulfill({
       contentType: "image/png",
       headers: { "access-control-allow-origin": "*" },
@@ -171,7 +180,7 @@ test("invalid provider image cannot be presented as a loaded map", async ({
   );
   await page.goto("/");
   await expect(
-    page.getByText("The latest map couldn’t load", { exact: true }),
+    page.getByText("Your map image couldn’t load", { exact: true }),
   ).toBeVisible();
   await expect(page.locator("[data-map-image]")).toHaveCount(0);
 });
@@ -198,4 +207,26 @@ test("guide and zone 4 planner remain usable on mobile", async ({ page }) => {
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("uses the exact supplied image URL when a local bundle is not present", async ({
+  page,
+}) => {
+  await page.route(bundledImage, (route) =>
+    route.fulfill({ status: 404, body: "Not bundled" }),
+  );
+  await page.route(MAP_SOURCE_URL, (route) =>
+    route.fulfill({ contentType: "image/png", body: mapPng }),
+  );
+  await page.goto("/");
+  await expect(
+    page.getByText("Your Fortnite map", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("[data-map-image]")).toHaveAttribute(
+    "href",
+    MAP_SOURCE_URL,
+  );
+  await placeZone1(page);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await expect(page.getByTestId("zone-4")).toBeVisible();
 });
