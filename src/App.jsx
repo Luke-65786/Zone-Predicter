@@ -20,11 +20,11 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
-  Upload,
   X,
   Zap,
 } from "lucide-react";
-import Island from "./Island.jsx";
+import useCurrentMap from "./useCurrentMap.js";
+import { MAP_SOURCE_URL } from "./map-source.js";
 import {
   DEFAULT_SETUP,
   MAP_SIZE,
@@ -32,10 +32,10 @@ import {
   fitCircle,
   planRotation,
   restoreSetup,
-  sampleNextCircle,
+  forecastZone4,
 } from "./geometry.js";
 
-const STORAGE_KEY = "zoneiq-setup-v1";
+const STORAGE_KEY = "zoneiq-setup-v2";
 function initialSetup() {
   try {
     return (
@@ -49,33 +49,28 @@ function initialSetup() {
 
 function App() {
   const [setup, setSetup] = useState(initialSetup);
-  const [scenario, setScenario] = useState(() =>
-    sampleNextCircle(
-      setup.circle,
-      setup.ratio,
-      (() => {
-        const values = [0.87, 0.52];
-        return () => values.shift();
-      })(),
-    ),
-  );
+  const [forecast, setForecast] = useState(null);
   const [tool, setTool] = useState("circle");
   const [showHeat, setShowHeat] = useState(true);
   const [showRoute, setShowRoute] = useState(true);
-  const [mapImage, setMapImage] = useState(null);
-  const [mapName, setMapName] = useState("Practice island");
+  const map = useCurrentMap();
+  const mapImage = map.url;
+  const mapName =
+    map.status === "ready"
+      ? "Fortnite Battle Royale"
+      : map.status === "loading"
+        ? "Loading latest map…"
+        : "Map unavailable";
+  const [showSteps, setShowSteps] = useState(true);
   const [help, setHelp] = useState(false);
   const [toast, setToast] = useState("");
   const [runCount, setRunCount] = useState(1);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [storageWarning, setStorageWarning] = useState(false);
   const svgRef = useRef(null);
   const mapRef = useRef(null);
-  const fileRef = useRef(null);
   const dragging = useRef(false);
-  const generationTimer = useRef(null);
-  const rotation = planRotation(setup.player, scenario);
-  const possibleRadius = setup.circle.radius - scenario.radius;
+  const scenario = forecast?.path[3];
+  const rotation = scenario ? planRotation(setup.player, scenario) : null;
 
   useEffect(() => {
     try {
@@ -90,11 +85,6 @@ function App() {
     const timer = setTimeout(() => setToast(""), 3200);
     return () => clearTimeout(timer);
   }, [toast]);
-  useEffect(() => () => clearTimeout(generationTimer.current), []);
-  useEffect(() => {
-    if (!mapImage) return;
-    return () => URL.revokeObjectURL(mapImage);
-  }, [mapImage]);
   useEffect(() => {
     if (!help) return;
     const previous = document.activeElement;
@@ -130,23 +120,21 @@ function App() {
     const next = { ...setup, ...patch };
     setSetup(next);
     if (patch.circle || patch.ratio) {
-      clearTimeout(generationTimer.current);
-      setIsGenerating(false);
-      setScenario(sampleNextCircle(next.circle, next.ratio));
+      setForecast(null);
       setRunCount(1);
     }
   }
   function generate() {
-    setIsGenerating(true);
-    generationTimer.current = setTimeout(() => {
-      setScenario(sampleNextCircle(setup.circle, setup.ratio));
-      setRunCount((value) => value + 1);
-      setIsGenerating(false);
-    }, 350);
+    if (!setup.hasZone1 || map.status !== "ready") return;
+    setForecast(forecastZone4(setup.circle, setup.ratio));
+    setRunCount((value) => value + 1);
   }
   function updatePosition(x, y) {
     if (tool === "circle")
-      changeSetup({ circle: fitCircle({ ...setup.circle, x, y }) });
+      changeSetup({
+        circle: fitCircle({ ...setup.circle, x, y }),
+        hasZone1: true,
+      });
     else
       changeSetup({
         player: { x: clamp(x, 0, MAP_SIZE), y: clamp(y, 0, MAP_SIZE) },
@@ -168,7 +156,7 @@ function App() {
       ArrowUp: [0, -1],
       ArrowDown: [0, 1],
     };
-    if (!directions[event.key]) return;
+    if (!directions[event.key] || map.status !== "ready") return;
     event.preventDefault();
     const active = tool === "circle" ? setup.circle : setup.player;
     const step = event.shiftKey ? 25 : 5;
@@ -178,44 +166,14 @@ function App() {
     );
   }
   function reset() {
-    clearTimeout(generationTimer.current);
-    setIsGenerating(false);
-    const next = structuredClone(DEFAULT_SETUP);
-    setSetup(next);
-    setScenario(sampleNextCircle(next.circle, next.ratio));
+    setSetup(structuredClone(DEFAULT_SETUP));
+    setForecast(null);
     setRunCount(1);
     setTool("circle");
-    setMapImage(null);
-    setMapName("Practice island");
     setShowHeat(true);
     setShowRoute(true);
-    setToast("Planner reset to the practice setup");
-  }
-  function upload(event) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (
-      !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-      file.size > 12 * 1024 * 1024
-    ) {
-      setToast("Choose a PNG, JPG, or WebP image under 12 MB.");
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      setMapImage(url);
-      setMapName(file.name);
-      setToast(
-        "Map loaded. Place the current circle to match your screenshot.",
-      );
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      setToast("That image could not be opened. Try another file.");
-    };
-    image.src = url;
+    setShowSteps(true);
+    setToast("Zone 1 cleared. Click the map to start a new estimate.");
   }
   async function fullscreen() {
     try {
@@ -243,7 +201,7 @@ function App() {
       title.setAttribute("fill", "#fff");
       title.setAttribute("font-family", "Arial, sans-serif");
       title.textContent =
-        "ZoneIQ · Sampled scenario only · Not a live zone prediction";
+        "ZoneIQ · Zone 1 → Zone 4 · Geometric simulation, not a live prediction";
       svg.appendChild(title);
       const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
         type: "image/svg+xml",
@@ -318,11 +276,11 @@ function App() {
               THE STORM DOESN’T WAIT. PLAN AHEAD.
             </div>
             <h1>
-              Think one circle <span>ahead.</span>
+              Zone 1 in. <span>Zone 4 outlook.</span>
             </h1>
             <p>
-              Your next rotation starts here. Map the storm. Explore the
-              possibilities.
+              Mark the first circle on the latest provider map. Explore where
+              zone 4 could land.
             </p>
           </div>
           <button
@@ -340,68 +298,80 @@ function App() {
                 <div className="heading-icon">
                   <Settings2 size={18} />
                 </div>
-                <h2>Set up your zone</h2>
+                <h2>Set your first circle</h2>
                 <span className="step-label">01 — 03</span>
               </div>
               <div className="control-section">
                 <div className="field-heading">
-                  <label htmlFor="map-select">Your map</label>
-                  <span className="tiny-tag">MANUAL INPUT</span>
+                  <span>Your map</span>
+                  <span className="tiny-tag">AUTO-LOADED</span>
                 </div>
-                <div id="map-select" className="map-select">
+                <div className="map-select">
                   <span className="map-thumbnail">
                     <Map size={21} />
                   </span>
                   <div>
-                    <strong title={mapName}>{mapName}</strong>
+                    <strong>{mapName}</strong>
                     <span>
-                      {mapImage
-                        ? "Custom map · this session"
-                        : "Illustrative map · not a live island"}
+                      {map.status === "ready"
+                        ? "Latest provider image · no upload"
+                        : map.status === "loading"
+                          ? "Contacting Fortnite-API…"
+                          : "Check your connection and retry"}
                     </span>
                   </div>
-                  <ChevronDown size={16} />
+                  <button
+                    className="icon-button"
+                    aria-label="Refresh latest map"
+                    disabled={map.status === "loading"}
+                    onClick={map.refresh}
+                  >
+                    <RotateCcw size={16} />
+                  </button>
                 </div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  className="visually-hidden"
-                  aria-label="Upload a map image"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={upload}
-                />
-                <button
-                  className="upload-button"
-                  onClick={() => fileRef.current.click()}
-                >
-                  <Upload size={14} /> Upload your map{" "}
-                  <span>JPG, PNG, WebP</span>
-                </button>
+                <p className="field-note">
+                  Map by{" "}
+                  <a href={MAP_SOURCE_URL} target="_blank" rel="noreferrer">
+                    Fortnite-API <ArrowUpRight size={10} />
+                  </a>
+                  . Provider updates may lag the game.
+                </p>
               </div>
               <div className="control-section">
                 <div className="field-heading">
-                  <label>Storm phase</label>
-                  <span className="field-value">
-                    Phase {setup.phase} <span>/ 9</span>
-                  </span>
+                  <label>Prediction path</label>
+                  <span className="field-value">Zone 1 → Zone 4</span>
                 </div>
-                <div className="phase-picker" aria-label="Storm phase">
-                  {Array.from({ length: 9 }, (_, index) => index + 1).map(
-                    (phase) => (
-                      <button
-                        key={phase}
-                        aria-label={`Phase ${phase}`}
-                        aria-pressed={setup.phase === phase}
-                        className={setup.phase === phase ? "selected" : ""}
-                        onClick={() => changeSetup({ phase })}
+                <div
+                  className="zone-timeline"
+                  aria-label="Simulation path from zone 1 to zone 4"
+                >
+                  {[1, 2, 3, 4].map((zone) => (
+                    <React.Fragment key={zone}>
+                      <span
+                        className={
+                          zone === 1
+                            ? "timeline-input"
+                            : zone === 4
+                              ? "timeline-output"
+                              : ""
+                        }
                       >
-                        {phase}
-                      </button>
-                    ),
-                  )}
+                        <small>
+                          {zone === 1
+                            ? "YOUR INPUT"
+                            : zone === 4
+                              ? "ESTIMATE"
+                              : "SIMULATED"}
+                        </small>
+                        <strong>Zone {zone}</strong>
+                      </span>
+                      {zone < 4 && <ChevronDown size={12} />}
+                    </React.Fragment>
+                  ))}
                 </div>
                 <p className="field-note">
-                  Phase labels your plan. Set circle sizes below.
+                  2,000 paths through zones 2 and 3 to zone 4.
                 </p>
               </div>
               <div className="control-section">
@@ -415,7 +385,7 @@ function App() {
                     aria-pressed={tool === "circle"}
                     onClick={() => setTool("circle")}
                   >
-                    <Crosshair size={17} /> Current circle
+                    <Crosshair size={17} /> Zone 1 circle
                   </button>
                   <button
                     className={tool === "player" ? "selected" : ""}
@@ -427,12 +397,12 @@ function App() {
                 </div>
                 <p className="field-note">
                   Click or drag the map to place{" "}
-                  {tool === "circle" ? "your circle" : "your marker"}.
+                  {tool === "circle" ? "zone 1’s center" : "your marker"}.
                 </p>
               </div>
               <div className="control-section range-section">
                 <div className="field-heading">
-                  <label htmlFor="circle-size">Current circle radius</label>
+                  <label htmlFor="circle-size">Zone 1 radius</label>
                   <span className="number-value">
                     {Math.round(setup.circle.radius / 10)}
                     <small>% of map</small>
@@ -464,10 +434,10 @@ function App() {
               </div>
               <div className="control-section range-section">
                 <div className="field-heading">
-                  <label htmlFor="next-size">Next circle size</label>
+                  <label htmlFor="next-size">Assumed shrink per zone</label>
                   <span className="number-value">
                     {Math.round(setup.ratio * 100)}
-                    <small>% of current</small>
+                    <small>% retained</small>
                   </span>
                 </div>
                 <input
@@ -498,7 +468,7 @@ function App() {
                     <label key={axis}>
                       {axis.toUpperCase()} position (%)
                       <input
-                        aria-label={`Current circle ${axis.toUpperCase()} position percent`}
+                        aria-label={`Zone 1 ${axis.toUpperCase()} position percent`}
                         type="number"
                         min={setup.circle.radius / 10}
                         max={100 - setup.circle.radius / 10}
@@ -506,6 +476,7 @@ function App() {
                         onChange={(event) => {
                           if (event.target.value !== "")
                             changeSetup({
+                              hasZone1: true,
                               circle: fitCircle({
                                 ...setup.circle,
                                 [axis]: +event.target.value * 10,
@@ -523,17 +494,20 @@ function App() {
               </details>
               <div className="generate-area">
                 <button
-                  className={`button button-primary generate-button ${isGenerating ? "generating" : ""}`}
-                  disabled={isGenerating}
+                  className="button button-primary generate-button"
+                  disabled={!setup.hasZone1 || map.status !== "ready"}
                   onClick={generate}
                 >
-                  <Sparkles size={18} />
-                  {isGenerating
-                    ? "Exploring the circle…"
-                    : "Generate next zone"}
+                  <Sparkles size={18} /> Estimate zone 4{" "}
                   <ArrowRight size={17} />
                 </button>
-                <span>Explore a possible next-circle scenario</span>
+                <span>
+                  {map.status !== "ready"
+                    ? "The latest map must load first"
+                    : !setup.hasZone1
+                      ? "Click the map to place zone 1 first"
+                      : "Geometric estimates · not guaranteed game zones"}
+                </span>
               </div>
             </section>
             <div className="fair-play">
@@ -543,8 +517,8 @@ function App() {
               <div>
                 <strong>A planner. No crystal ball.</strong>
                 <p>
-                  Future zones are server-generated. Use scenarios to practice,
-                  not as a live forecast.
+                  Zone 1 alone cannot reveal zone 4. The outlook uses the shrink
+                  assumption above, not hidden match data.
                 </p>
               </div>
             </div>
@@ -560,7 +534,11 @@ function App() {
                   <h2>Zone overview</h2>
                   <span className="practice-tag">
                     <span />
-                    {mapImage ? "CUSTOM MAP" : "PRACTICE MODE"}
+                    {map.status === "ready"
+                      ? "PROVIDER MAP"
+                      : map.status === "loading"
+                        ? "LOADING MAP"
+                        : "MAP OFFLINE"}
                   </span>
                 </div>
                 <div className="map-actions">
@@ -576,6 +554,7 @@ function App() {
                     className="icon-button"
                     title="Export plan"
                     aria-label="Export plan"
+                    disabled={!mapImage || !setup.hasZone1}
                     onClick={exportPlan}
                   >
                     <ArrowDownToLine size={16} />
@@ -598,11 +577,11 @@ function App() {
                   ref={svgRef}
                   viewBox="0 0 1000 1000"
                   role="application"
-                  aria-label={`Interactive zone map. ${tool === "circle" ? "Current circle" : "Player position"} selected. Use arrow keys to move, or click and drag.`}
+                  aria-label={`Interactive zone map. ${tool === "circle" ? "Zone 1 circle" : "Player position"} selected. Use arrow keys to move, or click and drag.`}
                   tabIndex="0"
                   onKeyDown={handleMapKey}
                   onPointerDown={(event) => {
-                    if (event.button !== 0) return;
+                    if (event.button !== 0 || map.status !== "ready") return;
                     dragging.current = true;
                     event.currentTarget.setPointerCapture(event.pointerId);
                     positionFromEvent(event);
@@ -655,94 +634,138 @@ function App() {
                       />
                     </>
                   ) : (
-                    <Island />
+                    <rect width="1000" height="1000" fill="#e5ebf1" />
                   )}
-                  <path
-                    d={`M0 0H1000V1000H0Z M${setup.circle.x - setup.circle.radius} ${setup.circle.y}a${setup.circle.radius} ${setup.circle.radius} 0 1 0 ${setup.circle.radius * 2} 0a${setup.circle.radius} ${setup.circle.radius} 0 1 0 -${setup.circle.radius * 2} 0Z`}
-                    fill="#5b4c9b"
-                    fillOpacity="0.48"
-                    fillRule="evenodd"
-                  />
-                  <circle
-                    cx={setup.circle.x}
-                    cy={setup.circle.y}
-                    r={setup.circle.radius}
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="4"
-                    strokeOpacity="0.96"
-                  />
-                  <circle
-                    cx={setup.circle.x}
-                    cy={setup.circle.y}
-                    r={setup.circle.radius + 6}
-                    fill="none"
-                    stroke="#e2e0ff"
-                    strokeWidth="1"
-                    strokeOpacity="0.5"
-                  />
-                  {showHeat && (
-                    <circle
-                      data-testid="possible-centers"
-                      cx={setup.circle.x}
-                      cy={setup.circle.y}
-                      r={possibleRadius}
-                      fill="url(#heat)"
-                      stroke="#c0efc6"
-                      strokeWidth="1.7"
-                      strokeDasharray="4 8"
-                    />
+                  {setup.hasZone1 && (
+                    <>
+                      <path
+                        d={`M0 0H1000V1000H0Z M${setup.circle.x - setup.circle.radius} ${setup.circle.y}a${setup.circle.radius} ${setup.circle.radius} 0 1 0 ${setup.circle.radius * 2} 0a${setup.circle.radius} ${setup.circle.radius} 0 1 0 -${setup.circle.radius * 2} 0Z`}
+                        fill="#5b4c9b"
+                        fillOpacity="0.48"
+                        fillRule="evenodd"
+                      />
+                      <circle
+                        cx={setup.circle.x}
+                        cy={setup.circle.y}
+                        r={setup.circle.radius}
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="4"
+                        strokeOpacity="0.96"
+                      />
+                      <circle
+                        cx={setup.circle.x}
+                        cy={setup.circle.y}
+                        r={setup.circle.radius + 6}
+                        fill="none"
+                        stroke="#e2e0ff"
+                        strokeWidth="1"
+                        strokeOpacity="0.5"
+                      />
+                    </>
                   )}
-                  <circle
-                    data-testid="next-circle"
-                    cx={scenario.x}
-                    cy={scenario.y}
-                    r={scenario.radius}
-                    fill="#546bf6"
-                    fillOpacity="0.16"
-                    stroke="#4262f5"
-                    strokeWidth="4"
-                    strokeDasharray="11 8"
-                  />
-                  <circle
-                    cx={scenario.x}
-                    cy={scenario.y}
-                    r="5"
-                    fill="#fff"
-                    stroke="#4262f5"
-                    strokeWidth="3"
-                  />
-                  <g
-                    transform={`translate(${scenario.x} ${scenario.y - scenario.radius - 26})`}
-                  >
-                    <rect
-                      x="-76"
-                      y="-17"
-                      width="152"
-                      height="33"
-                      rx="16.5"
-                      fill="#4c63ef"
-                    />
-                    <text
-                      y="5"
-                      textAnchor="middle"
-                      fill="white"
-                      fontFamily="Arial, sans-serif"
-                      fontSize="13"
-                      fontWeight="700"
-                      letterSpacing="1"
+                  {forecast && showHeat && (
+                    <g data-testid="possible-centers">
+                      {forecast.density.map((cell) => (
+                        <rect
+                          key={`${cell.x}:${cell.y}`}
+                          x={cell.x}
+                          y={cell.y}
+                          width={forecast.cellSize}
+                          height={forecast.cellSize}
+                          rx="6"
+                          fill="#7af1b8"
+                          fillOpacity={0.08 + cell.intensity * 0.65}
+                        />
+                      ))}
+                      <circle
+                        cx={forecast.center.x}
+                        cy={forecast.center.y}
+                        r={forecast.coverageRadius}
+                        fill="none"
+                        stroke="#d8ffb7"
+                        strokeWidth="2.5"
+                        strokeDasharray="5 7"
+                      />
+                    </g>
+                  )}
+                  {forecast &&
+                    showSteps &&
+                    forecast.path
+                      .slice(1, 3)
+                      .map((zone, index) => (
+                        <circle
+                          data-testid={`zone-${index + 2}`}
+                          key={index}
+                          cx={zone.x}
+                          cy={zone.y}
+                          r={zone.radius}
+                          fill="none"
+                          stroke={index === 0 ? "#f9d989" : "#f4ba83"}
+                          strokeWidth="2.5"
+                          strokeDasharray="6 9"
+                        />
+                      ))}
+                  {forecast && (
+                    <>
+                      <circle
+                        data-testid="zone-4"
+                        cx={scenario.x}
+                        cy={scenario.y}
+                        r={scenario.radius}
+                        fill="#546bf6"
+                        fillOpacity="0.16"
+                        stroke="#4262f5"
+                        strokeWidth="4"
+                        strokeDasharray="11 8"
+                      />
+                      <circle
+                        cx={scenario.x}
+                        cy={scenario.y}
+                        r="5"
+                        fill="#fff"
+                        stroke="#4262f5"
+                        strokeWidth="3"
+                      />
+                      <g
+                        transform={`translate(${scenario.x} ${scenario.y - scenario.radius - 26})`}
+                      >
+                        <rect
+                          x="-76"
+                          y="-17"
+                          width="152"
+                          height="33"
+                          rx="16.5"
+                          fill="#4c63ef"
+                        />
+                        <text
+                          y="5"
+                          textAnchor="middle"
+                          fill="white"
+                          fontFamily="Arial, sans-serif"
+                          fontSize="13"
+                          fontWeight="700"
+                          letterSpacing="1"
+                        >
+                          ZONE 4 ESTIMATE
+                        </text>
+                      </g>
+                    </>
+                  )}
+                  {setup.hasZone1 && (
+                    <g
+                      transform={`translate(${setup.circle.x} ${setup.circle.y})`}
+                      opacity={tool === "circle" ? 1 : 0.55}
                     >
-                      POSSIBLE NEXT ZONE
-                    </text>
-                  </g>
-                  <g
-                    transform={`translate(${setup.circle.x} ${setup.circle.y})`}
-                    opacity={tool === "circle" ? 1 : 0.55}
-                  >
-                    <circle r="14" fill="#fff" fillOpacity="0.9" />
-                    <path d="M-7 0H7M0-7V7" stroke="#4a5963" strokeWidth="2" />
-                  </g>
-                  {showRoute && !rotation.inside && (
+                      <circle r="14" fill="#fff" fillOpacity="0.9" />
+                      <path
+                        d="M-7 0H7M0-7V7"
+                        stroke="#4a5963"
+                        strokeWidth="2"
+                      />
+                    </g>
+                  )}
+                  {showRoute && rotation && !rotation.inside && (
                     <g data-testid="rotation-route">
                       <path
                         d={`M${setup.player.x} ${setup.player.y}L${rotation.target.x} ${rotation.target.y}`}
@@ -799,9 +822,11 @@ function App() {
                 </svg>
                 <div className="map-top-overlay">
                   <span>
-                    <span className="live-dot" /> PHASE {setup.phase}{" "}
-                    <span className="overlay-divider" /> SCENARIO{" "}
-                    {String(runCount).padStart(2, "0")}
+                    <span className="live-dot" /> ZONE 1 → 4
+                    <span className="overlay-divider" />{" "}
+                    {forecast
+                      ? `RUN ${String(runCount - 1).padStart(2, "0")}`
+                      : "PLACE ZONE 1"}
                   </span>
                   <div className="compass">
                     <span>N</span>
@@ -810,11 +835,11 @@ function App() {
                 </div>
                 <div className="map-layer-controls">
                   <button
-                    aria-label="Show possible center area"
+                    aria-label="Show zone 4 center density"
                     aria-pressed={showHeat}
                     className={showHeat ? "active" : ""}
                     onClick={() => setShowHeat(!showHeat)}
-                    title="Toggle possible center area"
+                    title="Toggle simulated zone 4 centers"
                   >
                     <Layers2 size={18} />
                   </button>
@@ -832,26 +857,46 @@ function App() {
                   <MousePointer2 size={13} />
                   <span>
                     {tool === "circle"
-                      ? "Click the map to position your circle"
+                      ? "Click the center of zone 1, then set its size"
                       : "Click the map to place your position"}
                   </span>
                 </div>
-                {!mapImage && (
-                  <span className="map-caption">ILLUSTRATIVE ISLAND</span>
+                {map.status !== "ready" && (
+                  <div className="map-load-state" role="status">
+                    <Map size={36} />
+                    <h3>
+                      {map.status === "loading"
+                        ? "Loading the latest map…"
+                        : "The latest map couldn’t load"}
+                    </h3>
+                    <p>
+                      {map.status === "loading"
+                        ? "Fetching the Battle Royale map from Fortnite-API."
+                        : "Check your connection or map-provider access. We won’t substitute an older or illustrative island."}
+                    </p>
+                    {map.status === "error" && (
+                      <button
+                        className="button button-primary"
+                        onClick={map.refresh}
+                      >
+                        Try again <RotateCcw size={15} />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               <div className="map-legend">
                 <span>
                   <i className="legend-current" />
-                  Current circle
+                  Zone 1
                 </span>
                 <span>
                   <i className="legend-next" />
-                  Sampled next zone
+                  Zone 4 estimate
                 </span>
                 <span>
                   <i className="legend-heat" />
-                  Possible centers
+                  Simulated centers
                 </span>
                 <span className="legend-you">
                   <i />
@@ -860,48 +905,81 @@ function App() {
               </div>
             </div>
 
+            {forecast && (
+              <div className="forecast-summary" aria-live="polite">
+                <div>
+                  <span>SIMULATED PATHS</span>
+                  <strong>{forecast.count.toLocaleString("en-GB")}</strong>
+                </div>
+                <div>
+                  <span>ZONE 4 RADIUS</span>
+                  <strong>
+                    {(scenario.radius / 10).toFixed(1)}
+                    <small>% of map</small>
+                  </strong>
+                </div>
+                <div>
+                  <span>CENTER SPREAD</span>
+                  <strong>
+                    80<small>% of simulated centers</small>
+                  </strong>
+                </div>
+              </div>
+            )}
             <section className="insight-card" aria-live="polite">
               <div className="insight-icon">
-                {rotation.inside ? (
-                  <ShieldCheck size={23} />
-                ) : (
-                  <MoveUpRight size={23} />
-                )}
+                <MoveUpRight size={23} />
               </div>
               <div className="insight-copy">
-                <div className="insight-eyebrow">YOUR ROTATION OUTLOOK</div>
+                <div className="insight-eyebrow">
+                  {forecast ? "ZONE 4 OUTLOOK" : "START WITH ZONE 1"}
+                </div>
                 <h3>
-                  {rotation.inside
-                    ? "You’re inside this scenario."
-                    : "A little planning. A better position."}
+                  {!forecast
+                    ? "Place the first circle. Explore three zones ahead."
+                    : rotation.inside
+                      ? "You’re inside this modeled zone 4."
+                      : "A possible zone 4. A starting point for your rotation."}
                 </h3>
                 <p>
-                  {rotation.inside
-                    ? "Your marker is in the sampled circle. Explore another scenario to test your position."
-                    : "The dotted line shows a direct path into this scenario. Check terrain before rotating."}
+                  {!forecast
+                    ? "Click zone 1’s center, adjust its radius, and select Estimate zone 4."
+                    : "The dashed green boundary contains 80% of simulated centers. The blue circle is one representative path, not an 80% match prediction."}
                 </p>
               </div>
-              <div className="rotation-stat">
-                <span>
-                  {rotation.inside ? (
-                    <Check size={25} />
-                  ) : (
-                    `${Math.round(rotation.distance / 10)}%`
-                  )}
-                </span>
-                <small>
-                  {rotation.inside ? "IN THIS CIRCLE" : "OF MAP WIDTH"}
-                </small>
-              </div>
+              {rotation && (
+                <div className="rotation-stat">
+                  <span>
+                    {rotation.inside ? (
+                      <Check size={25} />
+                    ) : (
+                      `${Math.round(rotation.distance / 10)}%`
+                    )}
+                  </span>
+                  <small>
+                    {rotation.inside ? "IN THIS MODEL" : "OF MAP WIDTH"}
+                  </small>
+                </div>
+              )}
             </section>
+            {forecast && (
+              <button
+                className="intermediate-toggle"
+                aria-pressed={showSteps}
+                onClick={() => setShowSteps(!showSteps)}
+              >
+                {showSteps ? "Hide" : "Show"} simulated zones 2 and 3{" "}
+                <ChevronDown size={13} />
+              </button>
+            )}
             <div className="map-footnote">
               <Info size={13} />
               <p>
-                Geometry-based scenarios. No live match data or guaranteed
-                predictions.{" "}
+                Three sequential, fully nested circles using your shrink
+                assumption. Model coverage is not real-match accuracy.{" "}
                 {storageWarning
                   ? "Browser storage is unavailable; settings will reset on reload."
-                  : "Your settings stay in this browser; uploaded maps stay in this session."}
+                  : "Your zone 1 setup stays in this browser."}
               </p>
             </div>
           </section>
@@ -918,10 +996,10 @@ function App() {
                 <Crosshair size={21} />
               </span>
               <div>
-                <h3>Start with the circle</h3>
+                <h3>Enter zone 1</h3>
                 <p>
-                  Match the white circle to your in-game map. A good setup makes
-                  a useful scenario.
+                  The latest provider map loads automatically. Place zone 1’s
+                  center and match the white circle’s size.
                 </p>
               </div>
               <span className="tip-number">01</span>
@@ -931,10 +1009,10 @@ function App() {
                 <LocateFixed size={21} />
               </span>
               <div>
-                <h3>Play the possibilities</h3>
+                <h3>Look three zones ahead</h3>
                 <p>
-                  Generate a few scenarios. Look for a position that gives you
-                  options in each.
+                  Simulate 2,000 paths through zones 2 and 3. See a zone 4
+                  example and how spread out its centers could be.
                 </p>
               </div>
               <span className="tip-number">02</span>
@@ -1017,32 +1095,37 @@ function App() {
             </p>
             <ol>
               <li>
-                <strong>Bring your map.</strong> Use the illustrative practice
-                island or upload a map screenshot. Images stay in your browser.
+                <strong>The map loads for you.</strong> The app requests
+                Fortnite-API’s latest Battle Royale map on opening. It does not
+                identify your match, mode, or island automatically; provider
+                updates can lag the game.
               </li>
               <li>
-                <strong>Match your circle.</strong> Place the current circle,
-                adjust its radius, and mark your position. Phase is a label; it
-                doesn’t change the model.
+                <strong>Enter zone 1.</strong> Click its center and adjust the
+                radius to match your first circle. You can also place your
+                player marker.
               </li>
               <li>
-                <strong>Explore next zones.</strong> Choose a next-circle size,
-                then generate scenarios. Every sampled circle fits inside your
-                current circle.
+                <strong>Estimate zone 4.</strong> The model simulates 2,000
+                paths from zone 1 through zones 2 and 3 to zone 4. The same
+                assumed radius ratio is applied three times. Adjust it for your
+                scenario; it is not verified storm data.
               </li>
               <li>
-                <strong>Plan a rotation.</strong> The dotted path leads just
-                inside the sampled circle. It doesn’t account for terrain or
-                opponents.
+                <strong>Read the spread.</strong> Green cells show the frequency
+                of simulated zone 4 centers; the dashed boundary covers 80% of
+                them. The blue zone 4 is from a representative sampled path. The
+                route ignores terrain and opponents.
               </li>
             </ol>
             <div className="model-note">
               <Info size={18} />
               <p>
-                Centers are sampled uniformly across the green area. This is a
-                geometric practice model, not Fortnite’s actual storm algorithm.
-                Moving endgame circles are not modeled. Distances are a
-                percentage of map width, not in-game meters.
+                Zone 1 alone cannot predict the real zone 4. Each next center is
+                sampled uniformly where its entire circle stays inside the
+                previous one. The 80% coverage describes simulations only, not a
+                probability of the actual match. Moving endgame circles are not
+                modeled. Distances use map-width percentages, not meters.
               </p>
             </div>
             <button

@@ -1,135 +1,201 @@
 import { test, expect } from "@playwright/test";
+import { MAP_IMAGE_URL } from "../../src/map-source.js";
 
-test("planner generates nested circles, updates sizes and persists settings", async ({
+// Explicit provider fixtures make browser behavior reproducible; they do not
+// claim that the live provider or the current season's image was verified.
+const mapPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aE7sAAAAASUVORK5CYII=",
+  "base64",
+);
+async function mockMap(page) {
+  await page.route(MAP_IMAGE_URL, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "image/png",
+      headers: { "access-control-allow-origin": "*" },
+      body: mapPng,
+    }),
+  );
+}
+async function openPlanner(page) {
+  await mockMap(page);
+  await page.goto("/");
+  await expect(
+    page.getByText("Fortnite Battle Royale", { exact: true }),
+  ).toBeVisible();
+}
+async function placeZone1(page) {
+  await page.getByRole("application").click({ position: { x: 190, y: 190 } });
+}
+
+test("auto-loads the provider map and estimates zone 4 through three nested transitions", async ({
   page,
 }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await openPlanner(page);
+  await expect(page.locator("input[type=file]")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "Think one circle ahead." }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Phase 6", exact: true }).click();
-  await page.locator("#next-size").fill("45");
+    page.getByRole("button", { name: "Estimate zone 4" }),
+  ).toBeDisabled();
+  await placeZone1(page);
+  await page.locator("#next-size").fill("65");
   await page.locator("#circle-size").fill("25");
-  await page.getByRole("button", { name: "Generate next zone" }).click();
-  await expect(
-    page.getByRole("button", { name: "Generate next zone" }),
-  ).toBeEnabled();
-  await expect(page.getByTestId("next-circle")).toHaveAttribute("r", "112.5");
-  const state = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("zoneiq-setup-v1")),
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await expect(page.getByTestId("zone-4")).toBeVisible();
+  await expect(page.getByText("2,000", { exact: true })).toBeVisible();
+  const setup = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("zoneiq-setup-v2")),
   );
-  const next = await page
-    .getByTestId("next-circle")
-    .evaluate((node) => ({
-      x: +node.getAttribute("cx"),
-      y: +node.getAttribute("cy"),
-      radius: +node.getAttribute("r"),
-    }));
-  expect(
-    Math.hypot(next.x - state.circle.x, next.y - state.circle.y) + next.radius,
-  ).toBeLessThanOrEqual(state.circle.radius + 0.001);
+  const circles = [setup.circle];
+  for (const zone of [2, 3, 4]) {
+    circles.push(
+      await page
+        .getByTestId(`zone-${zone}`)
+        .evaluate((node) => ({
+          x: +node.getAttribute("cx"),
+          y: +node.getAttribute("cy"),
+          radius: +node.getAttribute("r"),
+        })),
+    );
+  }
+  expect(circles[3].radius).toBeCloseTo(250 * 0.65 ** 3, 8);
+  for (let zone = 1; zone < 4; zone++) {
+    expect(
+      Math.hypot(
+        circles[zone].x - circles[zone - 1].x,
+        circles[zone].y - circles[zone - 1].y,
+      ) + circles[zone].radius,
+    ).toBeLessThanOrEqual(circles[zone - 1].radius + 0.001);
+  }
+  await page.locator("#circle-size").fill("30");
+  await expect(page.getByTestId("zone-4")).toHaveCount(0);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await expect(page.getByTestId("zone-4")).toHaveAttribute(
+    "r",
+    String(300 * 0.65 * 0.65 * 0.65),
+  );
   await page.reload();
+  await expect(page.locator("#circle-size")).toHaveValue("30");
   await expect(
-    page.getByRole("button", { name: "Phase 6", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("#next-size")).toHaveValue("45");
+    page.getByRole("button", { name: "Estimate zone 4" }),
+  ).toBeEnabled();
   expect(errors).toEqual([]);
 });
 
-test("map supports placement, keyboard controls, layers, and reset", async ({
+test("placement, keyboard controls, intermediate zones, heat layer, and reset work", async ({
   page,
 }) => {
-  await page.goto("/");
-  const map = page.getByRole("application");
+  await openPlanner(page);
+  await placeZone1(page);
   await page
     .getByRole("button", { name: "Your position", exact: true })
     .click();
   const before = await page
     .getByTestId("player-marker")
     .getAttribute("transform");
-  await map.focus();
+  await page.getByRole("application").focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByTestId("player-marker")).not.toHaveAttribute(
     "transform",
     before,
   );
-  await map.click({ position: { x: 200, y: 200 } });
-  await expect(page.getByTestId("player-marker")).not.toHaveAttribute(
-    "transform",
-    "translate(320 650)",
-  );
-  await page.getByRole("button", { name: "Show possible center area" }).click();
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await page
+    .getByRole("button", { name: "Show zone 4 center density" })
+    .click();
   await expect(page.getByTestId("possible-centers")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Hide simulated zones 2 and 3" })
+    .click();
+  await expect(page.getByTestId("zone-2")).toHaveCount(0);
+  await expect(page.getByTestId("zone-4")).toBeVisible();
   await page.getByRole("button", { name: "Reset planner" }).click();
-  await expect(page.getByTestId("possible-centers")).toBeVisible();
-  await expect(page.getByTestId("player-marker")).toHaveAttribute(
-    "transform",
-    "translate(315 650)",
-  );
+  await expect(page.getByTestId("zone-4")).toHaveCount(0);
   await expect(
-    page.getByRole("button", { name: "Current circle", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
+    page.getByRole("button", { name: "Estimate zone 4" }),
+  ).toBeDisabled();
+  await expect(
+    page.getByText("Fortnite Battle Royale", { exact: true }),
+  ).toBeVisible();
 });
 
-test("upload stays local and SVG export embeds the custom image", async ({
+test("export includes the provider map and zone 4 without external image dependencies", async ({
   page,
 }) => {
-  await page.goto("/");
-  await page.getByLabel("Upload a map image").setInputFiles({
-    name: "my-map.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aE7sAAAAASUVORK5CYII=",
-      "base64",
-    ),
-  });
-  await expect(page.getByText("my-map.png", { exact: true })).toBeVisible();
-  await expect(page.locator("[data-map-image]")).toHaveAttribute(
-    "href",
-    /^blob:/,
-  );
+  await openPlanner(page);
+  await placeZone1(page);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
   const downloadEvent = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export plan" }).click();
   const download = await downloadEvent;
-  expect(download.suggestedFilename()).toBe("zoneiq-plan.svg");
   const stream = await download.createReadStream();
   const chunks = [];
   for await (const chunk of stream) chunks.push(chunk);
   const svg = Buffer.concat(chunks).toString();
   expect(svg).toContain("data:image/png;base64,");
   expect(svg).not.toContain("blob:");
-  expect(svg).toContain("Sampled scenario only");
-  await page
-    .getByLabel("Upload a map image")
-    .setInputFiles({
-      name: "bad.png",
-      mimeType: "image/png",
-      buffer: Buffer.from("not an image"),
-    });
-  await expect(page.getByRole("status")).toContainText("could not be opened");
+  expect(svg).toContain("ZONE 4 ESTIMATE");
+  expect(svg).toContain("not a live prediction");
 });
 
-test("guide is keyboard accessible and mobile layout fits the viewport", async ({
+test("provider failure shows an honest error and can be retried", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(MAP_IMAGE_URL, (route) => route.abort("failed"));
   await page.goto("/");
+  await expect(
+    page.getByText("The latest map couldn’t load", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("[data-map-image]")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Estimate zone 4" }),
+  ).toBeDisabled();
+  await page.unroute(MAP_IMAGE_URL);
+  await mockMap(page);
+  await page.getByRole("button", { name: "Try again" }).click();
+  await expect(
+    page.getByText("Fortnite Battle Royale", { exact: true }),
+  ).toBeVisible();
+});
+
+test("invalid provider image cannot be presented as a loaded map", async ({
+  page,
+}) => {
+  await page.route(MAP_IMAGE_URL, (route) =>
+    route.fulfill({
+      contentType: "image/png",
+      headers: { "access-control-allow-origin": "*" },
+      body: "invalid image data",
+    }),
+  );
+  await page.goto("/");
+  await expect(
+    page.getByText("The latest map couldn’t load", { exact: true }),
+  ).toBeVisible();
+  await expect(page.locator("[data-map-image]")).toHaveCount(0);
+});
+
+test("guide and zone 4 planner remain usable on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openPlanner(page);
   await page.getByRole("button", { name: "Quick guide" }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-  await expect(dialog).toContainText("Moving endgame circles are not modeled");
+  await expect(page.getByRole("dialog")).toContainText(
+    "Zone 1 alone cannot predict the real zone 4",
+  );
   await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Generate next zone" }).click();
-  await expect(
-    page.getByRole("button", { name: "Generate next zone" }),
-  ).toBeEnabled();
-  await expect(page.getByTestId("next-circle")).toBeVisible();
+  await placeZone1(page);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await expect(page.getByTestId("zone-4")).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });
