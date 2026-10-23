@@ -178,40 +178,111 @@ test("zone 1 placement and legacy settings keep the requested fixed radius and s
   assert.ok(Math.abs(zone4.radius - 69.12) < 1e-8);
 });
 
-test("deadside points toward the nearer old-zone edge, congestion toward its center in every quadrant", () => {
-  const previous = { x: 500, y: 500, radius: 150 };
-  for (const [dx, dy] of [
-    [40, 0],
-    [-40, 0],
-    [0, 40],
-    [0, -40],
-    [25, 30],
-    [-25, -30],
-  ]) {
-    const next = { x: 500 + dx, y: 500 + dy, radius: 80 };
-    const sides = estimateZoneSides(previous, next);
-    assert.ok(sides);
-    const oldEdgeGap = (point) =>
-      previous.radius - Math.hypot(point.x - previous.x, point.y - previous.y);
-    assert.ok(oldEdgeGap(sides.deadside) < oldEdgeGap(sides.congested));
-    for (const point of [sides.deadside, sides.congested]) {
-      assert.ok(Math.hypot(point.x - next.x, point.y - next.y) < next.radius);
-    }
-    const radians = (sides.angle * Math.PI) / 180;
-    assert.ok(Math.abs(Math.cos(radians) - dx / Math.hypot(dx, dy)) < 1e-8);
-    assert.ok(Math.abs(Math.sin(radians) - dy / Math.hypot(dx, dy)) < 1e-8);
+test("green faces the fewest POIs even when they are closer or inside zone 4", () => {
+  const circle = { x: 500, y: 500, radius: 30 };
+  const pois = [
+    { name: "West A", x: 100, y: 450 },
+    { name: "West B", x: 100, y: 500 },
+    { name: "West C", x: 100, y: 550 },
+    { name: "East", x: 510, y: 500 },
+  ];
+  const sides = estimateZoneSides(circle, pois);
+  assert.equal(sides.status, "ready");
+  assert.equal(sides.deadsideCount, 1);
+  assert.equal(sides.congestedCount, 3);
+  assert.deepEqual(sides.deadsideNames, ["East"]);
+  assert.ok(sides.deadside.x > circle.x);
+  assert.ok(sides.congested.x < circle.x);
+  assert.ok(Math.abs(sides.angle) < 1e-8);
+  assert.equal(
+    estimateZoneSides(circle, [...pois].reverse()).angle,
+    sides.angle,
+  );
+});
+
+test("adding POIs changes the chosen deadside instead of using a previous-circle direction", () => {
+  const circle = { x: 500, y: 500, radius: 69.12 };
+  const pois = [
+    ...Array.from({ length: 3 }, (_, i) => ({
+      name: `East ${i}`,
+      x: 700,
+      y: 500,
+    })),
+    { name: "West 0", x: 300, y: 500 },
+  ];
+  const original = estimateZoneSides(circle, pois);
+  assert.equal(original.deadsideCount, 1);
+  assert.ok(original.deadside.x < circle.x);
+  const updated = estimateZoneSides(circle, [
+    ...pois,
+    ...Array.from({ length: 3 }, (_, i) => ({
+      name: `West ${i + 1}`,
+      x: 300,
+      y: 500,
+    })),
+  ]);
+  assert.equal(updated.deadsideCount, 3);
+  assert.equal(updated.congestedCount, 4);
+  assert.ok(updated.deadside.x > circle.x);
+});
+
+test("POI counting and facing directions work in all map quadrants", () => {
+  const circle = { x: 500, y: 500, radius: 60 };
+  for (const angle of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
+    const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+    const point = (name, sign) => ({
+      name,
+      x: 500 + sign * direction.x * 200,
+      y: 500 + sign * direction.y * 200,
+    });
+    const sides = estimateZoneSides(circle, [
+      point("Few", 1),
+      point("Many A", -1),
+      point("Many B", -1),
+      point("Many C", -1),
+    ]);
+    assert.equal(sides.deadsideCount, 1);
+    assert.equal(sides.congestedCount, 3);
+    assert.ok(
+      (sides.deadside.x - circle.x) * direction.x +
+        (sides.deadside.y - circle.y) * direction.y >
+        0,
+    );
   }
 });
 
-test("centered and almost-centered zones do not invent a deadside direction", () => {
-  const previous = { x: 500, y: 500, radius: 150 };
+test("equal opposing POI counts stay balanced without an arbitrary colored direction", () => {
+  const circle = { x: 500, y: 500, radius: 60 };
+  const result = estimateZoneSides(circle, [
+    { name: "East", x: 600, y: 500 },
+    { name: "West", x: 400, y: 500 },
+    { name: "North", x: 500, y: 400 },
+    { name: "South", x: 500, y: 600 },
+  ]);
+  assert.equal(result.status, "balanced");
+  assert.equal(result.deadsideCount, 2);
+  assert.equal(result.congestedCount, 2);
+  assert.equal(result.angle, undefined);
+});
+
+test("missing and exactly centered POIs do not fabricate a directional preference", () => {
+  const circle = { x: 500, y: 500, radius: 60 };
+  assert.equal(estimateZoneSides(circle, []).status, "no_pois");
+  const centered = estimateZoneSides(circle, [
+    { name: "Center", x: 500, y: 500 },
+  ]);
+  assert.equal(centered.status, "no_pois");
+  assert.equal(centered.neutralCount, 1);
+  const result = estimateZoneSides(circle, [
+    { name: "Center", x: 500, y: 500 },
+    { name: "East", x: 600, y: 500 },
+  ]);
+  assert.equal(result.status, "ready");
+  assert.equal(result.deadsideCount, 0);
+  assert.equal(result.congestedCount, 1);
+  assert.equal(result.neutralCount, 1);
   assert.equal(
-    estimateZoneSides(previous, { x: 500, y: 500, radius: 90 }),
-    null,
+    result.deadsideCount + result.congestedCount + result.neutralCount,
+    result.total,
   );
-  assert.equal(
-    estimateZoneSides(previous, { x: 503, y: 502, radius: 90 }),
-    null,
-  );
-  assert.ok(estimateZoneSides(previous, { x: 510, y: 500, radius: 90 }));
 });

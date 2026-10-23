@@ -28,6 +28,7 @@ import {
 import ZoneSides from "./ZoneSides.jsx";
 import useCurrentMap from "./useCurrentMap.js";
 import { MAP_SOURCE_URL } from "./map-source.js";
+import { MAP_POIS } from "./map-pois.js";
 import {
   DEFAULT_SETUP,
   MAP_SIZE,
@@ -78,9 +79,7 @@ function App() {
   const dragging = useRef(false);
   const scenario = forecast?.path[3];
   const rotation = scenario ? planRotation(setup.player, scenario) : null;
-  const zoneSides = forecast
-    ? estimateZoneSides(forecast.path[2], scenario)
-    : null;
+  const zoneSides = forecast ? estimateZoneSides(scenario, MAP_POIS) : null;
 
   useEffect(() => {
     try {
@@ -219,12 +218,11 @@ function App() {
       title.textContent =
         "ZoneIQ · Zone 1 → Zone 4 · Geometric simulation, not a live prediction";
       svg.appendChild(title);
-      if (showSides && zoneSides) {
+      if (showSides && zoneSides?.status === "ready") {
         const legend = title.cloneNode(true);
         legend.setAttribute("y", "951");
         legend.setAttribute("font-size", "14");
-        legend.textContent =
-          "Green: estimated deadside · Red: estimated congestion · Zone 3 → 4 geometry, no live player data";
+        legend.textContent = `Green: estimated deadside (${zoneSides.deadsideCount} POIs) · Red: estimated congestion (${zoneSides.congestedCount} POIs) · No live player data`;
         svg.appendChild(legend);
       }
       const blob = new Blob([new XMLSerializer().serializeToString(svg)], {
@@ -478,8 +476,9 @@ function App() {
                   </span>
                 </div>
                 <p className="field-note">
-                  Estimated from the simulated zone 3 → 4 shift. No live player
-                  locations.
+                  Green faces fewer POIs; red faces more. Counts use{" "}
+                  {MAP_POIS.length} named POIs mapped from your image, not live
+                  player locations.
                 </p>
               </div>
               <details className="fine-tune">
@@ -817,6 +816,26 @@ function App() {
                       />
                     </g>
                   )}
+                  {forecast && showSides && (
+                    <g data-testid="poi-markers">
+                      {MAP_POIS.map((poi) => (
+                        <circle
+                          key={poi.name}
+                          data-testid="poi-marker"
+                          cx={poi.x}
+                          cy={poi.y}
+                          r="6"
+                          fill="#fbbf24"
+                          stroke="#18243b"
+                          strokeWidth="2"
+                          role="img"
+                          aria-label={`${poi.name}, mapped POI`}
+                        >
+                          <title>{poi.name} · approximate POI position</title>
+                        </circle>
+                      ))}
+                    </g>
+                  )}
                   <g
                     data-testid="player-marker"
                     transform={`translate(${setup.player.x} ${setup.player.y})`}
@@ -933,26 +952,36 @@ function App() {
 
             {forecast && showSides && (
               <div className="sides-explanation" role="status">
-                {zoneSides ? (
+                {zoneSides?.status === "ready" ? (
                   <>
                     <div className="sides-key">
                       <span>
-                        <i className="deadside-dot" /> Estimated deadside
+                        <i className="deadside-dot" /> Estimated deadside ·{" "}
+                        <strong data-testid="deadside-poi-count">
+                          {zoneSides.deadsideCount} POIs
+                        </strong>
                       </span>
                       <span>
-                        <i className="congested-dot" /> Estimated congestion
+                        <i className="congested-dot" /> Estimated congestion ·{" "}
+                        <strong data-testid="congested-poi-count">
+                          {zoneSides.congestedCount} POIs
+                        </strong>
                       </span>
                     </div>
                     <p>
-                      Green faces the nearest edge of simulated zone 3; red
-                      faces its center. This estimates rotation pressure, not
-                      player counts.
+                      Green faces the fewest mapped POIs; red faces the opposite
+                      half with more POIs. All {zoneSides.total} map POIs are
+                      considered, including those outside zone 4. This is a
+                      POI-count estimate, not live player traffic.
+                      {zoneSides.neutralCount > 0 &&
+                        ` ${zoneSides.neutralCount} POI(s) at the exact zone center are neutral.`}
                     </p>
                   </>
                 ) : (
                   <p>
-                    Zones 3 and 4 are nearly centered, so there is no clear
-                    deadside or congested side to color.
+                    {zoneSides?.status === "balanced"
+                      ? `The facing halves have equal POI counts (${zoneSides.deadsideCount} each), so there is no clear POI-based deadside to color.`
+                      : "There are no directional POIs to compare around this zone, so neither side is colored."}
                   </p>
                 )}
               </div>
@@ -1171,10 +1200,12 @@ function App() {
               </li>
               <li>
                 <strong>Show deadside and congestion.</strong> Turn on the Zone
-                4 filter. Green is the short-rotation half pointing away from
-                simulated zone 3’s center; red faces the zone 3 center. Nearly
-                centered pulls are left uncolored. This is a geometric estimate
-                without live player data.
+                4 filter. The app compares POI counts in facing halves of the
+                map around zone 4. Green faces the fewest POIs; red faces the
+                opposite half with more. Equal counts stay uncolored. Yellow
+                markers show approximate positions of the named POIs from your
+                supplied map. POIs outside zone 4 count too; this does not
+                measure live player traffic.
               </li>
             </ol>
             <div className="model-note">

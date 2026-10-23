@@ -26,25 +26,86 @@ export function fitZone1(position) {
   return fitCircle({ ...position, radius: ZONE1_RADIUS });
 }
 
-// Short-rotation heuristic: the side pointing away from the previous center
-// has less space between the new and old edges. It is only a geometric proxy
-// for deadside, not measured player traffic. Near-centered pulls have no
-// meaningful preferred side, so do not invent a red/green direction for them.
-export function estimateZoneSides(previous, next) {
-  const dx = next.x - previous.x;
-  const dy = next.y - previous.y;
-  const distance = Math.hypot(dx, dy);
-  if (distance <= previous.radius * 0.05) return null;
-  const direction = { x: dx / distance, y: dy / distance };
+// Split the map into facing half-planes through zone 4's center. A POI only
+// changes sides when the divider crosses its bearing, so testing the midpoint
+// of every angular interval examines every distinct split (without putting
+// POIs on the divider to artificially exclude them). The least populated half
+// is green. Equal-count orientations prefer the widest stable interval.
+// All mapped POIs count, including those outside zone 4; this is a POI-count
+// heuristic, not observed player traffic or the previous short-rotation rule.
+export function estimateZoneSides(circle, pois) {
+  const tau = Math.PI * 2;
+  const normalize = (angle) => ((angle % tau) + tau) % tau;
+  const points = pois.map((poi) => ({
+    ...poi,
+    dx: poi.x - circle.x,
+    dy: poi.y - circle.y,
+  }));
+  const neutral = points.filter((poi) => Math.hypot(poi.dx, poi.dy) < 1e-6);
+  const directional = points.filter(
+    (poi) => Math.hypot(poi.dx, poi.dy) >= 1e-6,
+  );
+  const base = { total: points.length, neutralCount: neutral.length };
+  if (!directional.length)
+    return { ...base, status: "no_pois", deadsideCount: 0, congestedCount: 0 };
+
+  const boundaries = [
+    ...new Set(
+      directional.flatMap((poi) => {
+        const bearing = Math.atan2(poi.dy, poi.dx);
+        return [
+          normalize(bearing - Math.PI / 2),
+          normalize(bearing + Math.PI / 2),
+        ];
+      }),
+    ),
+  ].sort((a, b) => a - b);
+  let best;
+  for (let index = 0; index < boundaries.length; index++) {
+    const start = boundaries[index];
+    const end =
+      index === boundaries.length - 1
+        ? boundaries[0] + tau
+        : boundaries[index + 1];
+    const width = end - start;
+    if (width < 1e-10) continue;
+    const angle = normalize(start + width / 2);
+    const direction = { x: Math.cos(angle), y: Math.sin(angle) };
+    const deadsidePois = directional.filter(
+      (poi) => poi.dx * direction.x + poi.dy * direction.y > 0,
+    );
+    const congestedPois = directional.filter(
+      (poi) => poi.dx * direction.x + poi.dy * direction.y <= 0,
+    );
+    if (
+      !best ||
+      deadsidePois.length < best.deadsidePois.length ||
+      (deadsidePois.length === best.deadsidePois.length &&
+        width > best.width + 1e-10)
+    ) {
+      best = { angle, direction, deadsidePois, congestedPois, width };
+    }
+  }
+  const counts = {
+    ...base,
+    deadsideCount: best.deadsidePois.length,
+    congestedCount: best.congestedPois.length,
+  };
+  if (counts.deadsideCount === counts.congestedCount)
+    return { ...counts, status: "balanced" };
   return {
-    angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+    ...counts,
+    status: "ready",
+    angle: (best.angle * 180) / Math.PI,
+    deadsideNames: best.deadsidePois.map((poi) => poi.name),
+    congestedNames: best.congestedPois.map((poi) => poi.name),
     deadside: {
-      x: next.x + direction.x * next.radius * 0.6,
-      y: next.y + direction.y * next.radius * 0.6,
+      x: circle.x + best.direction.x * circle.radius * 0.6,
+      y: circle.y + best.direction.y * circle.radius * 0.6,
     },
     congested: {
-      x: next.x - direction.x * next.radius * 0.6,
-      y: next.y - direction.y * next.radius * 0.6,
+      x: circle.x - best.direction.x * circle.radius * 0.6,
+      y: circle.y - best.direction.y * circle.radius * 0.6,
     },
   };
 }

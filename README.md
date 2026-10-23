@@ -26,7 +26,7 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 - Place zone 1's center. Its radius is locked at 32% of map width, and radius retention is locked at 60% per subsequent zone. There are no radius or shrink sliders. Set your player marker optionally.
 - Estimate zone 4 with 2,000 paths, each simulating zones 2, 3, and 4 sequentially. Circle sizes use the fixed 60% radius retention for each of the three transitions.
 - View zone 4 center density, the boundary containing 80% of simulated centers, and a representative fully nested path. Toggle intermediate zones 2 and 3 and the direct rotation route.
-- Toggle the zone 4 deadside/congestion filter: green marks the estimated short-rotation half; red marks the half facing the simulated zone 3 center. The filter is off initially and includes an explicit no-live-player-data explanation.
+- Toggle the zone 4 deadside/congestion filter: green faces the fewest mapped POIs; red faces the opposite half with more POIs. Yellow map markers and numeric POI counts show what is being considered. The filter is off initially and includes an explicit no-live-player-data explanation.
 - Export the annotated map and zone estimates as a standalone SVG, including the selected image and any enabled deadside/congestion overlay and legend.
 - Zone 1 setup persists in local storage. Moving its center clears the previous estimate and its side overlay; generate again to recompute them. Legacy browser settings are normalized to the locked 32% radius and 60% retention on restore, while preserving a valid center and player position.
 - Use the map with a pointer, touch, or arrow keys. Shift + arrow moves in larger steps. Numeric zone 1 position controls are under “Fine-tune placement.”
@@ -43,9 +43,13 @@ The rotation line ends slightly inside the representative zone 4 using a straigh
 
 ## Deadside and congestion estimates
 
-The optional filter uses the representative path's simulated zone 3 and zone 4 circles. The half of zone 4 pointing **away from the zone 3 center**, toward the nearer old-zone edge, is colored green as estimated deadside. The opposite half points toward the zone 3 center and is colored red as estimated congestion. A dashed divider and text legend distinguish the halves; the center-density layer is cyan so green is reserved for deadside.
+The optional filter compares named POI counts in facing halves of the map through the representative zone 4 center. It examines every distinct dividing direction, colors the half containing the **fewest mapped POIs** green, and colors its opposite red. **All named POIs on the map count, including those outside zone 4.** It no longer depends on the zone 3 center or short-rotation distance.
 
-This short-rotation heuristic does not observe player counts, landing spots, terrain, routes, or live match positions. The reference zone 3 is itself simulated, not supplied by a live match. It cannot establish the actual deadside or traffic in a game. When the centers differ by no more than 5% of zone 3's radius, the UI reports that there is no clear preferred side and leaves the estimate uncolored. The filter can be toggled with a pointer or keyboard; it follows newly generated forecasts and clears on reset.
+`src/map-pois.js` contains the 13 named POIs visible in the image supplied by the user. Positions are approximate named-label anchors, manually normalized from that square image into the 1,000-unit map coordinate system. No API is used. When the filter is on, yellow markers show these annotations and their names appear on hover; the result panel reports both counts. **Update this catalog when replacing the map image.** The app does not automatically discover new POIs or verify that a remote replacement image matches these annotations.
+
+The algorithm places candidate dividers between POI bearings so a divider cannot artificially hide points by passing through them. Among orientations with the same minimum count, it chooses the widest interval of equivalent orientations to avoid placing the divider unnecessarily close to a POI. Equal opposing counts produce no red/green preference; empty data or POIs exactly at the zone center produce no directional preference either. A centered zone pull can still have a POI-based deadside when the POI counts differ.
+
+This is a count-based traffic proxy. It does not observe live player counts, landing popularity, POI size, terrain, routes, or actual rotations. The filter can be toggled with a pointer or keyboard, follows newly generated forecasts, clears on reset, and is included with its count legend in SVG exports. The cyan simulated-center layer remains separate from the red/green POI overlay.
 
 ## Selected map image
 

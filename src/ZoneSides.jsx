@@ -1,18 +1,17 @@
 import React from "react";
 
 export default function ZoneSides({ circle, sides }) {
-  if (!sides) return null;
+  if (!sides || sides.status !== "ready") return null;
   const radius = circle.radius;
   return (
     <g
       data-testid="zone-sides-overlay"
       role="img"
-      aria-label="Estimated zone 4 sides: green is the short-rotation deadside, red faces the previous zone center. No live player data."
+      aria-label={`Estimated zone 4 sides: green faces ${sides.deadsideCount} POIs, red faces ${sides.congestedCount} POIs. No live player data.`}
       transform={`translate(${circle.x} ${circle.y}) rotate(${sides.angle})`}
     >
       <title>
-        Estimated deadside and congested side from the simulated zone 3 to zone
-        4 shift
+        POI-based deadside: green faces fewer mapped POIs; red faces more
       </title>
       <path
         data-testid="deadside-region"

@@ -165,6 +165,8 @@ test("export includes the selected map and zone 4 without external image depende
   expect(svg).toContain("estimated congestion");
   expect(svg).toContain("#45df92");
   expect(svg).toContain("#fa6478");
+  expect(svg).toContain("POIs");
+  expect(svg).not.toContain("Zone 3 → 4 geometry");
 });
 
 test("image failure shows a clear error and can be retried", async ({
@@ -302,7 +304,7 @@ test("deadside filter toggles green/red zone 4 regions, clears stale sides, and 
     "#fa6478",
   );
   await expect(
-    page.getByText("This estimates rotation pressure, not player counts.", {
+    page.getByText("This is a POI-count estimate, not live player traffic.", {
       exact: false,
     }),
   ).toBeVisible();
@@ -324,4 +326,65 @@ test("deadside filter toggles green/red zone 4 regions, clears stale sides, and 
   );
   await page.getByRole("button", { name: "Reset planner" }).click();
   await expect(toggle).toHaveAttribute("aria-checked", "false");
+});
+
+test("deadside overlay counts visible mapped POIs in its facing direction and works without a zone shift", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+  });
+  await openPlanner(page);
+  await placeZone1(page);
+  await page.getByRole("button", { name: "Estimate zone 4" }).click();
+  await page
+    .getByRole("switch", { name: "Deadside and congestion overlay" })
+    .click();
+  await expect(page.getByTestId("zone-sides-overlay")).toBeVisible();
+  await expect(page.getByTestId("poi-marker")).toHaveCount(13);
+  const center = await page
+    .getByTestId("zone-4")
+    .evaluate((node) => ({
+      x: +node.getAttribute("cx"),
+      y: +node.getAttribute("cy"),
+      radius: +node.getAttribute("r"),
+    }));
+  const transform = await page
+    .getByTestId("zone-sides-overlay")
+    .getAttribute("transform");
+  const angle = (+transform.match(/rotate\(([^)]+)\)/)[1] * Math.PI) / 180;
+  const points = await page
+    .getByTestId("poi-marker")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        x: +node.getAttribute("cx"),
+        y: +node.getAttribute("cy"),
+      })),
+    );
+  const green = points.filter(
+    (poi) =>
+      (poi.x - center.x) * Math.cos(angle) +
+        (poi.y - center.y) * Math.sin(angle) >
+      0,
+  ).length;
+  const red = points.length - green;
+  expect(green).toBeLessThan(red);
+  expect(
+    points.some(
+      (poi) => Math.hypot(poi.x - center.x, poi.y - center.y) > center.radius,
+    ),
+  ).toBe(true);
+  await expect(page.getByTestId("deadside-poi-count")).toHaveText(
+    `${green} POIs`,
+  );
+  await expect(page.getByTestId("congested-poi-count")).toHaveText(
+    `${red} POIs`,
+  );
+  await expect(
+    page.getByRole("img", { name: "Lifty Lodge, mapped POI" }),
+  ).toBeVisible();
+  await page
+    .getByRole("switch", { name: "Deadside and congestion overlay" })
+    .click();
+  await expect(page.getByTestId("poi-marker")).toHaveCount(0);
 });
