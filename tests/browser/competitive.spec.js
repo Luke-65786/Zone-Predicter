@@ -10,7 +10,7 @@ async function mockMap(page) {
   );
 }
 
-test("CompIQ opens separate points/games inputs and the 312 / 12 example without loading a map", async ({
+test("CompIQ opens with clear fields and no example, including previously saved defaults", async ({
   page,
 }) => {
   const mapRequests = [];
@@ -18,25 +18,33 @@ test("CompIQ opens separate points/games inputs and the 312 / 12 example without
     if (/fortnite-map\.png|fortnite-api\.com/.test(request.url()))
       mapRequests.push(request.url());
   });
+  await page.addInitScript(() =>
+    localStorage.setItem("compiq-points-v1", JSON.stringify({
+      target: "312", games: "12", current: "0", played: "0",
+    })),
+  );
   await page.goto("/");
   await expect(page).toHaveTitle("Points Calculator · CompIQ");
   await expect(
     page.getByRole("tab", { name: "Points calculator" }),
   ).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByLabel("Target points", { exact: true })).toHaveValue(
-    "312",
-  );
-  await expect(page.getByLabel("Total games", { exact: true })).toHaveValue(
-    "12",
-  );
-  await expect(page.getByTestId("points-average")).toHaveText("26");
-  await expect(page.getByTestId("points-equation")).toContainText("312");
-  await expect(page.getByTestId("game-plan-row")).toHaveCount(12);
-  await expect(
-    page.getByTestId("game-plan-row").last().locator("td").nth(2),
-  ).toHaveText("312 pts");
+  for (const label of [
+    "Target points", "Total games", "Points earned", "Games played",
+  ]) {
+    await expect(page.getByLabel(label, { exact: true })).toHaveValue("");
+    await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("aria-invalid", "false");
+  }
+  await expect(page.getByTestId("points-average")).toHaveText("—");
+  await expect(page.getByTestId("points-equation")).toHaveCount(0);
+  await expect(page.getByTestId("game-plan-row")).toHaveCount(0);
+  await expect(page.getByRole("progressbar")).toHaveCount(0);
   await page.waitForLoadState("networkidle");
   expect(mapRequests).toEqual([]);
+  await page.getByLabel("Target points", { exact: true }).fill("312");
+  await page.getByLabel("Total games", { exact: true }).fill("12");
+  await expect(page.getByTestId("points-average")).toHaveText("26");
+  await page.reload();
+  await expect(page.getByTestId("points-average")).toHaveText("26");
 });
 
 test("point and game inputs calculate independently and whole-point plans preserve the exact goal", async ({
@@ -44,6 +52,7 @@ test("point and game inputs calculate independently and whole-point plans preser
 }) => {
   await page.goto("/");
   await page.getByLabel("Target points", { exact: true }).fill("313");
+  await page.getByLabel("Total games", { exact: true }).fill("12");
   await expect(page.getByTestId("points-average")).toHaveText("26.08");
   await expect(page.getByTestId("whole-point-plan")).toContainText("27 points");
   await expect(page.getByTestId("whole-point-plan")).toContainText("11 games");
@@ -59,6 +68,8 @@ test("progress, exhausted games, and achieved targets have distinct outcomes", a
   page,
 }) => {
   await page.goto("/");
+  await page.getByLabel("Target points", { exact: true }).fill("312");
+  await page.getByLabel("Total games", { exact: true }).fill("12");
   await page.getByLabel("Points earned", { exact: true }).fill("100");
   await page.getByLabel("Games played", { exact: true }).fill("4");
   await expect(page.getByTestId("points-average")).toHaveText("26.5");
@@ -86,6 +97,7 @@ test("invalid values show clear errors and do not retain a stale pace", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.getByLabel("Target points", { exact: true }).fill("312");
   await page.getByLabel("Total games", { exact: true }).fill("0");
   await expect(page.getByText("Enter at least one total game.")).toBeVisible();
   await expect(page.getByTestId("points-average")).toHaveText("—");
@@ -96,17 +108,20 @@ test("invalid values show clear errors and do not retain a stale pace", async ({
   ).toBeVisible();
   await page
     .getByRole("button", {
-      name: "Reset points calculator to 312 points in 12 games",
+      name: "Clear points calculator",
     })
     .click();
-  await page.getByLabel("Target points", { exact: true }).fill("");
-  await expect(
-    page.getByLabel("Target points", { exact: true }),
-  ).toHaveAttribute("aria-invalid", "true");
-  await expect(
-    page.getByText("Enter target points.", { exact: true }),
-  ).toBeVisible();
+  for (const label of [
+    "Target points", "Total games", "Points earned", "Games played",
+  ]) {
+    await expect(page.getByLabel(label, { exact: true })).toHaveValue("");
+    await expect(page.getByLabel(label, { exact: true })).toHaveAttribute("aria-invalid", "false");
+  }
+  await expect(page.getByTestId("game-plan-row")).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByLabel("Target points", { exact: true })).toHaveValue("");
   await page.getByLabel("Target points", { exact: true }).fill("312");
+  await page.getByLabel("Total games", { exact: true }).fill("12");
   await expect(page.getByTestId("points-average")).toHaveText("26");
 });
 
@@ -173,13 +188,16 @@ test("tabs support arrow-key navigation and legacy zone links", async ({
   await expect(page).toHaveTitle("Zone Predictor · CompIQ");
 });
 
-test("mobile calculator paginates correctly and restores saved point inputs", async ({
+test("mobile calculator paginates and restores custom inputs from the previous version", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() =>
+    localStorage.setItem("compiq-points-v1", JSON.stringify({
+      target: "25", games: "13", current: "0", played: "0",
+    })),
+  );
   await page.goto("/");
-  await page.getByLabel("Target points", { exact: true }).fill("25");
-  await page.getByLabel("Total games", { exact: true }).fill("13");
   await expect(page.getByTestId("game-plan-row")).toHaveCount(12);
   await page.getByRole("button", { name: "Next games" }).click();
   await expect(page.getByTestId("game-plan-row")).toHaveCount(1);

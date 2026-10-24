@@ -29,7 +29,7 @@ test("theme and accent preferences update live and survive a reload", async ({
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "daylight");
   await expect(page.locator("html")).toHaveAttribute("data-accent", "mint");
-  await expect(page.getByTestId("points-average")).toHaveText("26");
+  await expect(page.getByTestId("points-average")).toHaveText("—");
 });
 
 test("System follows device color changes while explicit themes remain stable", async ({
@@ -54,6 +54,8 @@ test("display controls change row spacing, navigation, glow, and motion and save
   page,
 }) => {
   await page.goto("/");
+  await page.getByLabel("Target points", { exact: true }).fill("312");
+  await page.getByLabel("Total games", { exact: true }).fill("12");
   const oldHeight = await page
     .getByTestId("game-plan-row")
     .first()
@@ -208,7 +210,7 @@ test("mobile settings fit the screen and the selected theme applies to both tool
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
-  await expect(page.getByTestId("points-average")).toHaveText("26");
+  await expect(page.getByTestId("points-average")).toHaveText("—");
   await page.getByRole("tab", { name: "Zone predictor" }).click();
   await expect(
     page.getByText("Your Fortnite map", { exact: true }),
@@ -246,6 +248,7 @@ test("blocked storage does not prevent live appearance changes or calculations",
   });
   await page.goto("/");
   await page.getByLabel("Target points", { exact: true }).fill("600");
+  await page.getByLabel("Total games", { exact: true }).fill("12");
   await expect(page.getByTestId("points-average")).toHaveText("50");
   await openSettings(page);
   await choose(page, "Graphite");

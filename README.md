@@ -21,7 +21,7 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 
 ## Points calculator
 
-The homepage opens the **Points calculator** tab (`#points`). Target points and total games are separate inputs. Optional points-earned and games-played inputs calculate the remaining pace:
+The homepage opens the **Points calculator** tab (`#points`) with all fields empty. Enter target points and total games separately to calculate your pace. Optional points-earned and games-played inputs can stay blank for a fresh start or calculate the remaining pace:
 
 `pointsPerGame = max(0, targetPoints − pointsEarned) ÷ (totalGames − gamesPlayed)`
 
@@ -30,7 +30,8 @@ The homepage opens the **Points calculator** tab (`#points`). Target points and 
 - Fractional averages are displayed to two decimal places. A whole-point plan preserves the exact goal; 313 points in 12 games becomes one 27-point game and eleven 26-point games.
 - The game-by-game table includes remaining game numbers and running totals, with 12-row pagination for longer plans.
 - Invalid values, games played exceeding the allowance, exhausted games, and already achieved targets have separate outcomes. A positive average below 0.01 is shown as `<0.01` rather than zero.
-- Inputs save in this browser under `compiq-points-v1`. The tool calculates immediately and needs no network request, event data, or scoring API.
+- **Clear all fields** empties the calculator and its results. Missing target or total games shows a quiet prompt without validation errors; blank optional progress fields count as zero.
+- Inputs save in this browser under `compiq-points-v2`. Custom inputs from the previous version are restored, while its automatically saved example is cleared. The tool calculates immediately and needs no network request, event data, or scoring API.
 - Goals are entered manually. The tool does not infer placement/elimination scoring, qualification thresholds, or future match scores.
 
 ## Tabs and saved state

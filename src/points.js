@@ -1,26 +1,23 @@
 export const DEFAULT_POINTS_FORM = Object.freeze({
-  target: "312",
-  games: "12",
-  current: "0",
-  played: "0",
+  target: "",
+  games: "",
+  current: "",
+  played: "",
 });
 
 // Manual targets only: tournament scoring and qualification cutoffs are not
 // assumed. Whole-point game targets below add up exactly to the stated goal.
 export function calculatePointsPace(form) {
-  const labels = {
-    target: "target points",
-    games: "total games",
-    current: "points earned",
-    played: "games played",
-  };
   const values = {};
   const errors = {};
-  for (const key of Object.keys(labels)) {
+  let incomplete = false;
+  for (const key of Object.keys(DEFAULT_POINTS_FORM)) {
     const raw = String(form[key] ?? "").trim();
     const value = Number(raw);
-    if (!raw) errors[key] = `Enter ${labels[key]}.`;
-    else if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value))
+    if (!raw) {
+      if (key === "target" || key === "games") incomplete = true;
+      else values[key] = 0;
+    } else if (!/^\d+$/.test(raw) || !Number.isSafeInteger(value))
       errors[key] = "Use a non-negative whole number.";
     else values[key] = value;
   }
@@ -29,6 +26,7 @@ export function calculatePointsPace(form) {
   if (!errors.played && !errors.games && values.played > values.games)
     errors.played = "Games played cannot exceed total games.";
   if (Object.keys(errors).length) return { status: "invalid", errors };
+  if (incomplete) return { status: "incomplete", errors };
 
   const pointsNeeded = Math.max(0, values.target - values.current);
   const gamesLeft = values.games - values.played;

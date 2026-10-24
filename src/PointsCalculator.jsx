@@ -19,7 +19,7 @@ import {
   gamePlanRows,
 } from "./points.js";
 
-const STORAGE_KEY = "compiq-points-v1";
+const STORAGE_KEY = "compiq-points-v2";
 const number = (value) =>
   new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(value);
 const points = (value) =>
@@ -28,7 +28,18 @@ const games = (value) => `${number(value)} ${value === 1 ? "game" : "games"}`;
 
 function initialForm() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const current = localStorage.getItem(STORAGE_KEY);
+    const saved = JSON.parse(current ?? localStorage.getItem("compiq-points-v1"));
+    // The old example was saved automatically, even without any user input.
+    if (
+      current === null &&
+      saved?.target === "312" &&
+      saved?.games === "12" &&
+      saved?.current === "0" &&
+      saved?.played === "0"
+    ) {
+      return { ...DEFAULT_POINTS_FORM };
+    }
     if (
       saved &&
       Object.keys(DEFAULT_POINTS_FORM).every(
@@ -107,7 +118,9 @@ export default function PointsCalculator() {
         ? "Your points target is already reached."
         : pace.status === "out_of_games"
           ? `${points(pace.pointsNeeded)} still needed with no games remaining.`
-          : "Enter valid whole numbers to calculate your points pace.";
+          : pace.status === "incomplete"
+            ? "Enter your target points and total games to get started."
+            : "Enter valid whole numbers to calculate your points pace.";
 
   return (
     <div className="page-shell points-page">
@@ -136,8 +149,8 @@ export default function PointsCalculator() {
               <h2>Your tournament target</h2>
               <button
                 className="icon-button"
-                aria-label="Reset points calculator to 312 points in 12 games"
-                title="Reset to the example"
+                aria-label="Clear points calculator"
+                title="Clear all fields"
                 onClick={() => {
                   setForm({ ...DEFAULT_POINTS_FORM });
                   setPage(0);
@@ -171,7 +184,7 @@ export default function PointsCalculator() {
                 {field(
                   "current",
                   "Points earned",
-                  "Leave at 0 for a fresh start.",
+                  "Leave blank for a fresh start.",
                   <Flag size={15} />,
                 )}
                 {field(
@@ -245,6 +258,8 @@ export default function PointsCalculator() {
                 "You’ve reached this points goal. Set a higher target to plan your next push."
               ) : pace.status === "out_of_games" ? (
                 `${points(pace.pointsNeeded)} still needed, but you have no games left. Review your target or game allowance.`
+              ) : pace.status === "incomplete" ? (
+                "Enter your target points and total games to get started."
               ) : (
                 "Enter valid points and games to see the average you need."
               )}
@@ -261,7 +276,7 @@ export default function PointsCalculator() {
             )}
           </div>
 
-          {pace.status !== "invalid" && (
+          {["ready", "achieved", "out_of_games"].includes(pace.status) && (
             <>
               <div className="points-metrics">
                 <div>

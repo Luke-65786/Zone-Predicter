@@ -7,7 +7,25 @@ import {
 } from "../src/points.js";
 
 const pace = (patch) =>
-  calculatePointsPace({ ...DEFAULT_POINTS_FORM, ...patch });
+  calculatePointsPace({
+    ...DEFAULT_POINTS_FORM,
+    target: "312",
+    games: "12",
+    ...patch,
+  });
+
+test("blank inputs wait for a target and games without errors or a game plan", () => {
+  assert.ok(Object.values(DEFAULT_POINTS_FORM).every((value) => value === ""));
+  for (const form of [
+    DEFAULT_POINTS_FORM,
+    { ...DEFAULT_POINTS_FORM, target: "312" },
+  ]) {
+    const result = calculatePointsPace(form);
+    assert.equal(result.status, "incomplete");
+    assert.deepEqual(result.errors, {});
+    assert.deepEqual(gamePlanRows(result), []);
+  }
+});
 
 test("312 points in 12 games requires 26 points per game", () => {
   const result = pace({});
@@ -66,9 +84,8 @@ test("exhausted games show a shortfall without division by zero", () => {
   assert.deepEqual(gamePlanRows(result), []);
 });
 
-test("empty, negative, fractional, unsafe, and inconsistent inputs are rejected", () => {
+test("negative, fractional, unsafe, and inconsistent inputs are rejected", () => {
   for (const patch of [
-    { target: "" },
     { target: "-1" },
     { current: "0.5" },
     { games: "0" },
