@@ -327,6 +327,121 @@
 .scoring-tier .icon-button {
   margin-top: 22px;
 }
+.scoring-tier-list {
+  position: relative;
+  max-height: 430px;
+  overflow-y: auto;
+  padding: 0 3px;
+  margin: 12px -3px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.scoring-import {
+  position: relative;
+  margin: 20px 0;
+  padding: 18px 15px;
+  border: 1px dashed var(--accent-line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+.screenshot-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--blue);
+}
+.screenshot-heading h3 {
+  font-size: 12px;
+  font-weight: 600;
+}
+.screenshot-privacy {
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin-top: 12px;
+}
+.screenshot-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 17px 0;
+}
+.screenshot-preview img {
+  max-width: 65px;
+  max-height: 110px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.screenshot-preview > span {
+  font-size: 10px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.screenshot-progress {
+  font-size: 11px;
+  color: var(--blue);
+  margin-top: 17px;
+}
+.screenshot-progress progress {
+  width: 100%;
+  accent-color: var(--primary);
+  margin: 12px 0;
+}
+.screenshot-progress small {
+  display: block;
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+.screenshot-review {
+  margin-top: 20px;
+}
+.screenshot-review h4 {
+  font-size: 12px;
+  margin: 0;
+}
+.screenshot-warnings {
+  padding-left: 17px;
+  margin: 12px 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.8;
+}
+.screenshot-warnings li + li {
+  margin-top: 7px;
+}
+.screenshot-rows {
+  max-height: 330px;
+  overflow-y: auto;
+  margin-top: 13px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+.screenshot-rows .comp-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  padding: 10px 7px;
+}
+.screenshot-rows .comp-table td {
+  padding: 7px;
+}
+.screenshot-rows input {
+  min-width: 56px;
+  font-size: 12px;
+}
+.screenshot-check-row {
+  background: var(--accent-soft);
+}
+.screenshot-applied {
+  color: var(--blue);
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 16px;
+}
 .practice-list {
   display: grid;
   gap: 12px;

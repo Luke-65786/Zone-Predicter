@@ -4,3 +4,4 @@ test-results/
 .DS_Store
 *.local
 /public/maps/fortnite-map.png
+/public/ocr/

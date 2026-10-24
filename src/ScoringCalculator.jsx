@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Calculator, Plus, Trash2 } from "lucide-react";
+import { Calculator, Plus, RotateCcw, Trash2 } from "lucide-react";
+import ScoringScreenshotImport from "./ScoringScreenshotImport.jsx";
 import {
   blankScoring,
   format,
@@ -20,6 +21,7 @@ export default function ScoringCalculator() {
     saved,
   } = useSavedState("compiq-scoring-v1", blankScoring, normalizeScoring);
   const [touched, setTouched] = useState(false);
+  const [beforeImport, setBeforeImport] = useState(null);
   const patch = (values) =>
     setValue((previous) => ({ ...previous, ...values }));
   const field = (key) => ({
@@ -46,6 +48,30 @@ export default function ScoringCalculator() {
             Use the published rules for your event. No official scoring format
             is assumed.
           </p>
+          <ScoringScreenshotImport
+            onApply={({ tiers, elimination }) => {
+              setBeforeImport({
+                tiers: form.tiers,
+                elimination: form.elimination,
+              });
+              patch({
+                tiers,
+                ...(elimination !== null ? { elimination } : {}),
+              });
+              setTouched(true);
+            }}
+          />
+          {beforeImport && (
+            <button
+              className="comp-undo"
+              onClick={() => {
+                patch(beforeImport);
+                setBeforeImport(null);
+              }}
+            >
+              <RotateCcw size={14} /> Undo screenshot import
+            </button>
+          )}
           <NumberField
             label="Points per elimination"
             max="1000"
@@ -57,46 +83,52 @@ export default function ScoringCalculator() {
             points. For example, Top 1: 20 and Top 10: 5 awards 20 for a win, 5
             for finishes 2–10, and zero below that.
           </p>
-          {form.tiers.map((tier, index) => (
-            <div className="scoring-tier" key={tier.id}>
-              <NumberField
-                label={`Tier ${index + 1} top finish`}
-                min="1"
-                max="100"
-                value={tier.rank}
-                onChange={(e) => {
-                  patch({
-                    tiers: form.tiers.map((t) =>
-                      t.id === tier.id ? { ...t, rank: e.target.value } : t,
-                    ),
-                  });
-                  setTouched(true);
-                }}
-              />
-              <NumberField
-                label={`Tier ${index + 1} total points`}
-                max="1000000"
-                value={tier.points}
-                onChange={(e) => {
-                  patch({
-                    tiers: form.tiers.map((t) =>
-                      t.id === tier.id ? { ...t, points: e.target.value } : t,
-                    ),
-                  });
-                  setTouched(true);
-                }}
-              />
-              <button
-                className="icon-button"
-                aria-label={`Remove tier ${index + 1}`}
-                onClick={() =>
-                  patch({ tiers: form.tiers.filter((t) => t.id !== tier.id) })
-                }
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-          ))}
+          <div
+            className="scoring-tier-list"
+            role="group"
+            aria-label="Placement scoring rules"
+          >
+            {form.tiers.map((tier, index) => (
+              <div className="scoring-tier" key={tier.id}>
+                <NumberField
+                  label={`Tier ${index + 1} top finish`}
+                  min="1"
+                  max="100"
+                  value={tier.rank}
+                  onChange={(e) => {
+                    patch({
+                      tiers: form.tiers.map((t) =>
+                        t.id === tier.id ? { ...t, rank: e.target.value } : t,
+                      ),
+                    });
+                    setTouched(true);
+                  }}
+                />
+                <NumberField
+                  label={`Tier ${index + 1} total points`}
+                  max="1000000"
+                  value={tier.points}
+                  onChange={(e) => {
+                    patch({
+                      tiers: form.tiers.map((t) =>
+                        t.id === tier.id ? { ...t, points: e.target.value } : t,
+                      ),
+                    });
+                    setTouched(true);
+                  }}
+                />
+                <button
+                  className="icon-button"
+                  aria-label={`Remove tier ${index + 1}`}
+                  onClick={() =>
+                    patch({ tiers: form.tiers.filter((t) => t.id !== tier.id) })
+                  }
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
           <button
             className="button button-white"
             disabled={form.tiers.length >= 100}
