@@ -1,19 +1,27 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Calculator, Crosshair, Settings2, Zap } from "lucide-react";
+import { Calculator, Crosshair, House, Settings2, Zap } from "lucide-react";
+import HomePage from "./HomePage.jsx";
 import PointsCalculator from "./PointsCalculator.jsx";
 import ZonePlanner from "./ZonePlanner.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
 import useAppearance from "./useAppearance.js";
 
 const tabs = [
+  { id: "home", label: "Home", icon: House },
   { id: "points", label: "Points calculator", icon: Calculator },
   { id: "zones", label: "Zone predictor", icon: Crosshair },
 ];
-const tabFromHash = () =>
-  ["#zones", "#planner"].includes(window.location.hash) ? "zones" : "points";
+const tabFromHash = () => {
+  if (["#zones", "#planner"].includes(window.location.hash)) return "zones";
+  if (window.location.hash === "#points") return "points";
+  return "home";
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState(tabFromHash);
+  const [visitedPoints, setVisitedPoints] = useState(
+    () => tabFromHash() === "points",
+  );
   const [visitedZones, setVisitedZones] = useState(
     () => tabFromHash() === "zones",
   );
@@ -23,9 +31,11 @@ export default function App() {
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   useEffect(() => {
     setSettingsOpen(false);
+    window.scrollTo(0, 0);
   }, [activeTab]);
 
   function selectTab(id) {
+    if (id === "points") setVisitedPoints(true);
     if (id === "zones") setVisitedZones(true);
     setActiveTab(id);
     if (window.location.hash !== `#${id}`)
@@ -34,6 +44,7 @@ export default function App() {
   useEffect(() => {
     function syncTab() {
       const id = tabFromHash();
+      if (id === "points") setVisitedPoints(true);
       if (id === "zones") setVisitedZones(true);
       setActiveTab(id);
     }
@@ -45,7 +56,9 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
-    document.title = `${activeTab === "points" ? "Points Calculator" : "Zone Predictor"} · CompIQ`;
+    document.title = activeTab === "home"
+      ? "CompIQ · Fortnite Competitive Toolkit"
+      : `${activeTab === "points" ? "Points Calculator" : "Zone Predictor"} · CompIQ`;
   }, [activeTab]);
 
   function onTabKey(event, index) {
@@ -65,7 +78,7 @@ export default function App() {
     <>
       <header className="site-header">
         <div className="header-inner competitive-header">
-          <a className="brand" href="#points" aria-label="CompIQ home">
+          <a className="brand" href="#home" aria-label="CompIQ home">
             <span className="brand-mark">
               <Zap size={24} fill="currentColor" strokeWidth={1.5} />
             </span>
@@ -116,12 +129,20 @@ export default function App() {
       </header>
       <main id="main-content">
         <section
+          id="panel-home"
+          role="tabpanel"
+          aria-labelledby="tab-home"
+          hidden={activeTab !== "home"}
+        >
+          <HomePage onOpenSettings={() => setSettingsOpen(true)} />
+        </section>
+        <section
           id="panel-points"
           role="tabpanel"
           aria-labelledby="tab-points"
           hidden={activeTab !== "points"}
         >
-          <PointsCalculator />
+          {visitedPoints && <PointsCalculator />}
         </section>
         <section
           id="panel-zones"
@@ -136,7 +157,7 @@ export default function App() {
         <div className="footer-inner">
           <a
             className="brand footer-brand"
-            href="#points"
+            href="#home"
             aria-label="CompIQ home"
           >
             <span className="brand-mark">

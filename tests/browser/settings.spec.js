@@ -13,7 +13,7 @@ async function choose(page, name) {
 test("theme and accent preferences update live and survive a reload", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#points");
   await openSettings(page);
   await choose(page, "Daylight");
   await choose(page, "Mint");
@@ -36,7 +36,7 @@ test("System follows device color changes while explicit themes remain stable", 
   page,
 }) => {
   await page.emulateMedia({ colorScheme: "light" });
-  await page.goto("/");
+  await page.goto("/#points");
   await openSettings(page);
   await choose(page, "System");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "daylight");
@@ -53,7 +53,7 @@ test("System follows device color changes while explicit themes remain stable", 
 test("display controls change row spacing, navigation, glow, and motion and save false values", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("312");
   await page.getByLabel("Total games", { exact: true }).fill("12");
   const oldHeight = await page
@@ -126,7 +126,7 @@ test("resetting appearance preserves calculator values, zone forecasts, and filt
       ),
     }),
   );
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("400");
   await page.getByLabel("Total games", { exact: true }).fill("10");
   await page.getByRole("tab", { name: "Zone predictor" }).click();
@@ -158,7 +158,7 @@ test("resetting appearance preserves calculator values, zone forecasts, and filt
 test("settings traps keyboard focus and closes with Escape and a backdrop click", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#points");
   await openSettings(page);
   await expect(
     page.getByRole("button", { name: "Close settings" }),
@@ -197,7 +197,7 @@ test("mobile settings fit the screen and the selected theme applies to both tool
       ),
     }),
   );
-  await page.goto("/");
+  await page.goto("/#points");
   await openSettings(page);
   const bounds = await page.getByRole("dialog").boundingBox();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
@@ -231,7 +231,7 @@ test("corrupt saved preferences recover to a usable default", async ({
   await page.addInitScript(() =>
     localStorage.setItem("compiq-appearance-v1", "{broken"),
   );
-  await page.goto("/");
+  await page.goto("/#points");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
   await openSettings(page);
   await choose(page, "Graphite");
@@ -246,7 +246,7 @@ test("blocked storage does not prevent live appearance changes or calculations",
       throw new DOMException("Storage unavailable", "QuotaExceededError");
     };
   });
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("600");
   await page.getByLabel("Total games", { exact: true }).fill("12");
   await expect(page.getByTestId("points-average")).toHaveText("50");

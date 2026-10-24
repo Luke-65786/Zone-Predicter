@@ -23,7 +23,7 @@ test("CompIQ opens with clear fields and no example, including previously saved 
       target: "312", games: "12", current: "0", played: "0",
     })),
   );
-  await page.goto("/");
+  await page.goto("/#points");
   await expect(page).toHaveTitle("Points Calculator · CompIQ");
   await expect(
     page.getByRole("tab", { name: "Points calculator" }),
@@ -50,7 +50,7 @@ test("CompIQ opens with clear fields and no example, including previously saved 
 test("point and game inputs calculate independently and whole-point plans preserve the exact goal", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("313");
   await page.getByLabel("Total games", { exact: true }).fill("12");
   await expect(page.getByTestId("points-average")).toHaveText("26.08");
@@ -67,7 +67,7 @@ test("point and game inputs calculate independently and whole-point plans preser
 test("progress, exhausted games, and achieved targets have distinct outcomes", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("312");
   await page.getByLabel("Total games", { exact: true }).fill("12");
   await page.getByLabel("Points earned", { exact: true }).fill("100");
@@ -96,7 +96,7 @@ test("progress, exhausted games, and achieved targets have distinct outcomes", a
 test("invalid values show clear errors and do not retain a stale pace", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("312");
   await page.getByLabel("Total games", { exact: true }).fill("0");
   await expect(page.getByText("Enter at least one total game.")).toBeVisible();
@@ -131,7 +131,7 @@ test("switching tools preserves calculator and zone state, including browser Bac
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await mockMap(page);
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByLabel("Target points", { exact: true }).fill("400");
   await page.getByRole("tab", { name: "Zone predictor" }).click();
   await expect(
@@ -143,7 +143,9 @@ test("switching tools preserves calculator and zone state, including browser Bac
     .getByRole("switch", { name: "Deadside and congestion overlay" })
     .click();
   const before = await page.getByTestId("zone-4").getAttribute("cx");
-  await page.getByRole("tab", { name: "Points calculator" }).click();
+  await page.getByRole("tab", { name: "Home", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Your game plan starts here.");
+  await page.getByRole("link", { name: "Open points calculator" }).click();
   await expect(page.getByLabel("Target points", { exact: true })).toHaveValue(
     "400",
   );
@@ -169,7 +171,7 @@ test("tabs support arrow-key navigation and legacy zone links", async ({
   page,
 }) => {
   await mockMap(page);
-  await page.goto("/");
+  await page.goto("/#points");
   await page.getByRole("tab", { name: "Points calculator" }).focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("tab", { name: "Zone predictor" })).toBeFocused();
@@ -178,8 +180,13 @@ test("tabs support arrow-key navigation and legacy zone links", async ({
   ).toBeVisible();
   await page.keyboard.press("Home");
   await expect(
-    page.getByRole("tab", { name: "Points calculator" }),
+    page.getByRole("tab", { name: "Home", exact: true }),
   ).toBeFocused();
+  await expect(page.getByRole("tabpanel", { name: "Home", exact: true })).toBeVisible();
+  await page.keyboard.press("End");
+  await expect(page.getByRole("tab", { name: "Zone predictor" })).toBeFocused();
+  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("tab", { name: "Points calculator" })).toBeFocused();
   await expect(page.getByTestId("points-average")).toBeVisible();
   await page.goto("/#planner");
   await expect(
@@ -197,7 +204,7 @@ test("mobile calculator paginates and restores custom inputs from the previous v
       target: "25", games: "13", current: "0", played: "0",
     })),
   );
-  await page.goto("/");
+  await page.goto("/#points");
   await expect(page.getByTestId("game-plan-row")).toHaveCount(12);
   await page.getByRole("button", { name: "Next games" }).click();
   await expect(page.getByTestId("game-plan-row")).toHaveCount(1);

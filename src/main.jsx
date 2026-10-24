@@ -5,6 +5,7 @@ import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/manrope";
 import "./styles.css";
 import "./appearance.css";
+import "./home.css";
 import { applyAppearance, readAppearance } from "./appearance.js";
 
 applyAppearance(

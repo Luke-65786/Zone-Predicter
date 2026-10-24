@@ -1,6 +1,6 @@
 # CompIQ
 
-A dark Fortnite competitive toolkit built with React and Vite, with separate points-calculator and zone-predictor tabs.
+A Fortnite competitive toolkit built with React and Vite, with a home page for choosing the points calculator or zone predictor.
 
 ## GitHub Pages deployment
 
@@ -19,9 +19,13 @@ npm run dev
 
 Vite listens on port 5173. Use `npm run build` for the production bundle, `npm run preview` to serve that bundle, and `npm test` for the geometry tests.
 
+## Home page
+
+The default page and `#home` open a tool chooser with links to the **Points calculator** and **Zone predictor**. The Home tab and CompIQ logos return here from either tool. Both tools mount only when first opened, so the chooser makes no map request or changes to saved calculator inputs. Returning home preserves tool state, and its appearance shortcut opens the shared Settings menu.
+
 ## Points calculator
 
-The homepage opens the **Points calculator** tab (`#points`) with all fields empty. Enter target points and total games separately to calculate your pace. Optional points-earned and games-played inputs can stay blank for a fresh start or calculate the remaining pace:
+The **Points calculator** tab (`#points`) starts with all fields empty. Enter target points and total games separately to calculate your pace. Optional points-earned and games-played inputs can stay blank for a fresh start or calculate the remaining pace:
 
 `pointsPerGame = max(0, targetPoints − pointsEarned) ÷ (totalGames − gamesPlayed)`
 
@@ -40,7 +44,7 @@ The **Zone predictor** tab is at `#zones`; old `#planner` links still open it. T
 
 ## Appearance settings
 
-Open **Settings** in the header on desktop or mobile. Changes apply immediately to both tools and are stored separately under `compiq-appearance-v1`:
+Open **Settings** in the header on desktop or mobile, or **Customize appearance** on the home page. Changes apply immediately to the home page and both tools and are stored separately under `compiq-appearance-v1`:
 
 - **Themes:** Midnight (the default), Graphite, Daylight, or System. System follows changes to the device's color preference.
 - **Accents:** Indigo, Mint, Rose, or Amber for buttons, highlights, and progress bars.
