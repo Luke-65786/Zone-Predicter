@@ -41,7 +41,7 @@ test("System follows device color changes while explicit themes remain stable", 
   await choose(page, "System");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "daylight");
   await page.emulateMedia({ colorScheme: "dark" });
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "battle");
   await choose(page, "Graphite");
   await page.emulateMedia({ colorScheme: "light" });
   await expect(page.locator("html")).toHaveAttribute("data-theme", "graphite");
@@ -143,8 +143,8 @@ test("resetting appearance preserves calculator values, zone forecasts, and filt
   await choose(page, "Daylight");
   await choose(page, "Rose");
   await page.getByRole("button", { name: "Reset appearance" }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
-  await expect(page.locator("html")).toHaveAttribute("data-accent", "indigo");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "battle");
+  await expect(page.locator("html")).toHaveAttribute("data-accent", "victory");
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("zone-4")).toHaveAttribute("cx", before);
   await expect(
@@ -232,7 +232,7 @@ test("corrupt saved preferences recover to a usable default", async ({
     localStorage.setItem("compiq-appearance-v1", "{broken"),
   );
   await page.goto("/#points");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "battle");
   await openSettings(page);
   await choose(page, "Graphite");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "graphite");
@@ -256,4 +256,205 @@ test("blocked storage does not prevent live appearance changes or calculations",
   await expect(
     page.getByText("Applied for this session", { exact: true }),
   ).toBeVisible();
+});
+
+test("new style controls apply visibly, save, and respect the chosen start page and direct links", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "battle");
+  await expect(page.locator("html")).toHaveAttribute("data-accent", "victory");
+  expect(
+    await page
+      .locator("html")
+      .evaluate((node) => getComputedStyle(node).colorScheme),
+  ).toBe("dark");
+  const oldFont = await page
+    .locator(".home-intro p")
+    .evaluate((node) => parseFloat(getComputedStyle(node).fontSize));
+  await openSettings(page);
+  await page
+    .getByRole("textbox", { name: "Custom accent hex" })
+    .fill("#ff5dcc");
+  await page
+    .getByRole("combobox", { name: "Background style" })
+    .selectOption("grid");
+  await page
+    .getByRole("combobox", { name: "Card corners" })
+    .selectOption("sharp");
+  await page.getByRole("combobox", { name: "Text size" }).selectOption("large");
+  await page
+    .getByRole("combobox", { name: "Workspace width" })
+    .selectOption("focused");
+  await page
+    .getByRole("combobox", { name: "Home page layout" })
+    .selectOption("list");
+  await page
+    .getByRole("combobox", { name: "Start page" })
+    .selectOption("tracker");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("tabpanel", { name: "Home", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page
+      .locator(".home-tool")
+      .first()
+      .evaluate((node) => getComputedStyle(node).flexDirection),
+  ).toBe("row");
+  expect(
+    await page
+      .locator(".home-tool")
+      .first()
+      .evaluate((node) => getComputedStyle(node).borderRadius),
+  ).toBe("3px");
+  expect(
+    await page
+      .locator(".home-intro p")
+      .evaluate((node) => parseFloat(getComputedStyle(node).fontSize)),
+  ).toBeGreaterThan(oldFont);
+  expect(
+    await page
+      .locator(".home-page")
+      .evaluate((node) => getComputedStyle(node).maxWidth),
+  ).toBe("1160px");
+  expect(
+    await page
+      .locator("body")
+      .evaluate((node) => getComputedStyle(node).backgroundImage),
+  ).toContain("linear-gradient");
+  await page.goto("/#home");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-home-layout",
+    "list",
+  );
+  expect(
+    await page
+      .locator("html")
+      .evaluate((node) => node.style.getPropertyValue("--primary")),
+  ).toBe("#ff5dcc");
+  await page.goto("/");
+  await expect(
+    page.getByRole("tab", { name: "Tournament tracker", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  await page.goto("/#points");
+  await expect(page.getByLabel("Target points", { exact: true })).toHaveValue(
+    "",
+  );
+  await openSettings(page);
+  await page.getByRole("button", { name: "Reset appearance" }).click();
+  await expect(page.getByRole("combobox", { name: "Start page" })).toHaveValue(
+    "home",
+  );
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "battle");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-home-layout",
+    "grid",
+  );
+});
+
+test("custom colors reject invalid hex and explicit legacy theme choices survive reload", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("compiq-appearance-v1"))
+      localStorage.setItem(
+        "compiq-appearance-v1",
+        JSON.stringify({
+          theme: "midnight",
+          accent: "indigo",
+          density: "comfortable",
+          stickyNav: true,
+          glow: true,
+          reduceMotion: false,
+        }),
+      );
+  });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "battle");
+  await openSettings(page);
+  await page
+    .getByRole("textbox", { name: "Custom accent hex" })
+    .fill("#777777");
+  await expect(page.locator("html")).toHaveAttribute("data-accent", "custom");
+  await page.getByRole("textbox", { name: "Custom accent hex" }).fill("#oops");
+  await expect(
+    page.getByRole("textbox", { name: "Custom accent hex" }),
+  ).toHaveAttribute("aria-invalid", "true");
+  expect(
+    await page
+      .locator("html")
+      .evaluate((node) => node.style.getPropertyValue("--primary")),
+  ).toBe("#777777");
+  await page.reload();
+  await openSettings(page);
+  await expect(
+    page.getByRole("textbox", { name: "Custom accent hex" }),
+  ).toHaveValue("#777777");
+  await choose(page, "Midnight");
+  await choose(page, "Indigo");
+  await page.keyboard.press("Escape");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "midnight");
+  await expect(page.locator("html")).toHaveAttribute("data-accent", "indigo");
+  await openSettings(page);
+  await page.getByRole("textbox", { name: "Custom accent hex" }).fill("#bad");
+  await page.getByRole("button", { name: "Reset appearance" }).click();
+  await expect(
+    page.getByRole("textbox", { name: "Custom accent hex" }),
+  ).toHaveValue("#33c6ff");
+  await expect(
+    page.getByRole("textbox", { name: "Custom accent hex" }),
+  ).toHaveAttribute("aria-invalid", "false");
+});
+
+test("mobile larger text, list view, and extended settings fit and keep every tool reachable", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto("/");
+  await openSettings(page);
+  await page.getByRole("combobox", { name: "Text size" }).selectOption("large");
+  await page
+    .getByRole("combobox", { name: "Home page layout" })
+    .selectOption("list");
+  await page
+    .getByRole("combobox", { name: "Workspace width" })
+    .selectOption("wide");
+  await page
+    .getByRole("combobox", { name: "Card corners" })
+    .selectOption("round");
+  await page
+    .getByRole("combobox", { name: "Background style" })
+    .selectOption("plain");
+  expect(
+    await page
+      .getByRole("dialog")
+      .evaluate((node) => node.scrollWidth <= node.clientWidth),
+  ).toBe(true);
+  await page.keyboard.press("Escape");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  expect(
+    await page
+      .locator("body")
+      .evaluate((node) => getComputedStyle(node).backgroundImage),
+  ).toBe("none");
+  await expect(page.locator(".home-tool")).toHaveCount(6);
+  await page
+    .getByRole("link", { name: "Open scoring calculator", exact: true })
+    .click();
+  await expect(
+    page.getByRole("tab", { name: "Scoring calculator", exact: true }),
+  ).toHaveAttribute("aria-selected", "true");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

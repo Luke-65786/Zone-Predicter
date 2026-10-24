@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Check,
   CheckCheck,
@@ -11,10 +11,18 @@ import {
   Sparkles,
   Sun,
   X,
+  Zap,
 } from "lucide-react";
-import { ACCENTS } from "./appearance.js";
+import { ACCENTS, DEFAULT_APPEARANCE, accentForeground } from "./appearance.js";
+import { TOOLS } from "./tool-catalog.js";
 
 const themeChoices = [
+  {
+    id: "battle",
+    name: "Battle Royale",
+    description: "Dark blue, cyan, purple, and victory yellow.",
+    icon: Zap,
+  },
   {
     id: "midnight",
     name: "Midnight",
@@ -51,6 +59,8 @@ export default function SettingsPanel({
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
   const resetRef = useRef(null);
+  const [customHex, setCustomHex] = useState(settings.customColor);
+  useEffect(() => setCustomHex(settings.customColor), [settings.customColor]);
   useEffect(() => {
     const dialog = dialogRef.current;
     const previous = document.activeElement;
@@ -82,6 +92,29 @@ export default function SettingsPanel({
         <span className="preference-track" aria-hidden="true">
           <span />
         </span>
+      </label>
+    );
+  }
+
+  function choice(key, title, description, options) {
+    return (
+      <label className="density-choice" htmlFor={`appearance-${key}`}>
+        <span>
+          <strong>{title}</strong>
+          <small>{description}</small>
+        </span>
+        <select
+          id={`appearance-${key}`}
+          aria-label={title}
+          value={settings[key]}
+          onChange={(event) => update({ [key]: event.target.value })}
+        >
+          {options.map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
       </label>
     );
   }
@@ -210,7 +243,13 @@ export default function SettingsPanel({
                   />
                   <span
                     className="accent-swatch"
-                    style={{ background: accent.primary }}
+                    style={{
+                      background:
+                        id === "custom" ? settings.customColor : accent.primary,
+                      color: accentForeground(
+                        id === "custom" ? settings.customColor : accent.primary,
+                      ),
+                    }}
                   >
                     {settings.accent === id && <Check size={14} />}
                   </span>
@@ -218,7 +257,111 @@ export default function SettingsPanel({
                 </label>
               ))}
             </div>
+            <div className="custom-accent-editor">
+              <label htmlFor="custom-accent-color">Your own accent</label>
+              <div>
+                <input
+                  id="custom-accent-color"
+                  type="color"
+                  aria-label="Custom accent color"
+                  value={settings.customColor}
+                  onChange={(event) =>
+                    update({
+                      accent: "custom",
+                      customColor: event.target.value,
+                    })
+                  }
+                />
+                <input
+                  type="text"
+                  aria-label="Custom accent hex"
+                  maxLength={7}
+                  spellCheck={false}
+                  value={customHex}
+                  aria-invalid={!/^#[0-9a-f]{6}$/i.test(customHex)}
+                  onChange={(event) => {
+                    setCustomHex(event.target.value);
+                    if (/^#[0-9a-f]{6}$/i.test(event.target.value))
+                      update({
+                        accent: "custom",
+                        customColor: event.target.value,
+                      });
+                  }}
+                />
+              </div>
+              <p>
+                Pick a color or enter its hex code. Button text and highlights
+                adjust for readability.
+              </p>
+              {!/^#[0-9a-f]{6}$/i.test(customHex) && (
+                <p className="custom-color-error">
+                  Use a hex color such as #33c6ff.
+                </p>
+              )}
+            </div>
           </fieldset>
+          <section
+            className="settings-section display-settings"
+            aria-labelledby="layout-heading"
+          >
+            <h3 id="layout-heading">
+              <Palette size={15} /> Layout and style
+            </h3>
+            {choice(
+              "background",
+              "Background style",
+              "Set the mood behind your tools.",
+              [
+                ["aurora", "Aurora"],
+                ["grid", "Grid"],
+                ["plain", "Plain"],
+              ],
+            )}
+            {choice(
+              "corners",
+              "Card corners",
+              "Choose the shape of your panels.",
+              [
+                ["soft", "Soft"],
+                ["round", "Rounded"],
+                ["sharp", "Sharp"],
+              ],
+            )}
+            {choice(
+              "textSize",
+              "Text size",
+              "Give labels, instructions, and tables more room.",
+              [
+                ["standard", "Standard"],
+                ["large", "Larger"],
+              ],
+            )}
+            {choice(
+              "width",
+              "Workspace width",
+              "Use more screen space or keep things focused.",
+              [
+                ["standard", "Standard"],
+                ["wide", "Wide"],
+                ["focused", "Focused"],
+              ],
+            )}
+            {choice(
+              "homeLayout",
+              "Home page layout",
+              "Choose tool cards or a simpler list.",
+              [
+                ["grid", "Grid"],
+                ["list", "List"],
+              ],
+            )}
+            {choice(
+              "startPage",
+              "Start page",
+              "Opens next visit when you use the website’s main link.",
+              [["home", "Home"], ...TOOLS.map((tool) => [tool.id, tool.name])],
+            )}
+          </section>
           <section
             className="settings-section display-settings"
             aria-labelledby="display-heading"
@@ -249,7 +392,7 @@ export default function SettingsPanel({
             {toggle(
               "glow",
               "Ambient glow",
-              "Add a soft wash of color to the background.",
+              "Add soft lighting to backgrounds and result cards.",
             )}
             {toggle(
               "reduceMotion",
@@ -270,7 +413,14 @@ export default function SettingsPanel({
             <span />
             {saved ? "Saved in this browser" : "Applied for this session"}
           </span>
-          <button onClick={reset} ref={resetRef} className="preferences-reset">
+          <button
+            onClick={() => {
+              setCustomHex(DEFAULT_APPEARANCE.customColor);
+              reset();
+            }}
+            ref={resetRef}
+            className="preferences-reset"
+          >
             <RotateCcw size={13} /> Reset appearance
           </button>
         </footer>

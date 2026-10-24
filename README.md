@@ -70,8 +70,14 @@ The **Zone predictor** tab is at `#zones`; old `#planner` links still open it. T
 
 Open **Settings** in the header on desktop or mobile, or **Customize appearance** on the home page. Changes apply immediately to the home page and all tools and are stored separately under `compiq-appearance-v1`:
 
-- **Themes:** Midnight (the default), Graphite, Daylight, or System. System follows changes to the device's color preference.
-- **Accents:** Indigo, Mint, Rose, or Amber for buttons, highlights, and progress bars.
+- **Themes:** Battle Royale (the new default) uses a Fortnite-inspired dark navy palette with purple/cyan lighting and victory yellow. Midnight, Graphite, Daylight, and System remain available; System uses Battle Royale for a dark device preference and Daylight for light.
+- **Accents:** Victory, Storm, Slurp, Indigo, Mint, Rose, or Amber, plus a custom color picker and hex input. Button text selects a contrasting foreground; custom link/highlight shades adjust for readable contrast in dark and light themes. Invalid hex values are never applied or saved.
+- **Backgrounds:** Aurora lighting, a static Grid, or Plain.
+- **Card corners:** Soft, Rounded, or Sharp.
+- **Text size:** Standard or Larger for instructions, labels, tables, navigation, and tool form controls.
+- **Workspace width:** Standard (1,376 px), Wide (1,600 px), or Focused (1,160 px), within the available screen width.
+- **Home page layout:** the card Grid or a simpler List; all six tools remain reachable in either layout.
+- **Start page:** Home or a preferred tool, used on the next visit without a URL fragment. Explicit links such as `#home` and `#scoring` keep their usual destinations.
 - **Spacing:** Comfortable or Compact, which reduces vertical spacing without shrinking text.
 - **Sticky navigation:** keeps the tool tabs visible while scrolling; sticky side controls account for the header height.
 - **Ambient glow:** toggles the soft background and result-card illumination.
@@ -79,12 +85,14 @@ Open **Settings** in the header on desktop or mobile, or **Customize appearance*
 
 The drawer supports keyboard focus wrapping, Escape, backdrop dismissal, and focus return to its trigger. The saved theme is applied before the React interface renders. Invalid saved preferences recover to defaults; when browser storage is blocked, preferences still work for the session and the menu explains that they were not saved.
 
+Appearance data now includes schema version 2 under the existing key. An unchanged version-1 Midnight/Indigo default is migrated to Battle Royale/Victory so returning users see the new default; customised legacy preferences are preserved. Explicit theme choices saved in version 2 are never remigrated.
+
 **Reset appearance** resets only appearance preferences. Calculator inputs, zone forecasts, fixed 32%/60% settings, and filters remain intact. Themes do not recolor the selected map image or its semantic green/red POI overlay. Preferences are local to this browser; no account or extra service is required.
 
 ## Zone predictor
 
 - Use the map image selected by the user: `https://fortnite-api.com/images/map_en.png`. The GitHub Pages workflow downloads and bundles this PNG with the site. No map API is used. Local development falls back to the selected image URL when the bundled file is absent.
-- Midnight, Graphite, Daylight, or device-matched themes across controls, results, notifications, help, and browser form controls. The map image and green/red POI meanings retain their original colors.
+- Battle Royale, Midnight, Graphite, Daylight, or device-matched themes across controls, results, notifications, help, and browser form controls. The map image and green/red POI meanings retain their original colors.
 - Place zone 1's center. Its radius is locked at 32% of map width, and radius retention is locked at 60% per subsequent zone. There are no radius or shrink sliders. Set your player marker optionally.
 - Estimate zone 4 with 2,000 paths, each simulating zones 2, 3, and 4 sequentially. Circle sizes use the fixed 60% radius retention for each of the three transitions.
 - View zone 4 center density, the boundary containing 80% of simulated centers, and a representative fully nested path. Toggle intermediate zones 2 and 3 and the direct rotation route.

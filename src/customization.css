@@ -1,0 +1,308 @@
+:root {
+  --on-primary: #0a1020;
+  --card-radius: 14px;
+  --workspace-width: 1376px;
+  --scene-secondary: var(--primary);
+}
+:root[data-theme="battle"] {
+  color-scheme: dark;
+  --page-bg: #080e24;
+  --surface: #111d39;
+  --surface-subtle: #0b1530;
+  --surface-raised: #1b2c50;
+  --ink: #f2f6ff;
+  --text-secondary: #ccd9f5;
+  --text-muted: #a2b6d9;
+  --line: #2b436c;
+  --scene-secondary: #793eff;
+  --ambient-color: color-mix(in srgb, var(--blue) 14%, transparent);
+  --card-shadow: 0 8px 28px #02061126;
+}
+.button-primary,
+.brand-mark,
+.phase-picker button.selected,
+.timeline-output small,
+.timeline-output strong {
+  color: var(--on-primary);
+}
+.button-primary:hover {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+::selection {
+  color: var(--on-primary);
+}
+.preference-checkbox:checked + .preference-track > span {
+  background: var(--on-primary);
+}
+:root[data-theme="battle"] .home-intro h1 {
+  font-style: italic;
+  letter-spacing: -1.8px;
+}
+:root[data-theme="battle"][data-accent="victory"] .home-intro .eyebrow,
+:root[data-theme="battle"][data-accent="victory"] .home-tool-action {
+  color: var(--primary);
+}
+:root[data-theme="battle"] .home-tool-preview {
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--blue) 9%, var(--surface-subtle)),
+    color-mix(in srgb, var(--scene-secondary) 20%, var(--surface))
+  );
+}
+:root[data-theme="battle"] .brand-beta {
+  color: #ffe366;
+  border-color: #ffe36644;
+}
+
+/* All backgrounds remain static, and ambient glow can be disabled separately. */
+:root[data-background] body {
+  background: var(--page-bg);
+}
+:root[data-background="aurora"][data-glow="true"] body {
+  background:
+    radial-gradient(
+      ellipse 70% 650px at 8% 0%,
+      color-mix(in srgb, var(--scene-secondary) 19%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 60% 700px at 100% 15%,
+      color-mix(in srgb, var(--blue) 12%, transparent),
+      transparent
+    ),
+    var(--page-bg);
+}
+:root[data-background="grid"] body {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--line) 35%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--line) 35%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 32px 32px;
+}
+:root[data-background="grid"][data-glow="true"] body {
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--line) 35%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--line) 35%, transparent) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      ellipse at 15% 0%,
+      color-mix(in srgb, var(--scene-secondary) 14%, transparent),
+      transparent 60%
+    );
+  background-size:
+    32px 32px,
+    32px 32px,
+    100% 100%;
+}
+:root[data-corners="round"] {
+  --card-radius: 23px;
+}
+:root[data-corners="sharp"] {
+  --card-radius: 3px;
+}
+.card,
+.home-tool,
+.pace-card,
+.comp-spotlight,
+.comp-metric,
+.home-appearance,
+.competitive-bottom-note {
+  border-radius: var(--card-radius);
+}
+:root[data-width="wide"] {
+  --workspace-width: 1600px;
+}
+:root[data-width="focused"] {
+  --workspace-width: 1160px;
+}
+.page-shell,
+.header-inner,
+.footer-inner {
+  max-width: var(--workspace-width);
+}
+
+:root[data-home-layout="list"] .home-tools {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+:root[data-home-layout="list"] .home-tool {
+  flex-direction: row;
+}
+:root[data-home-layout="list"] .home-tool-preview {
+  width: 170px;
+  height: auto;
+  min-height: 170px;
+  border-bottom: 0;
+  border-right: 1px solid var(--line);
+  flex-shrink: 0;
+}
+:root[data-home-layout="list"] .home-preview-bars,
+:root[data-home-layout="list"] .home-preview-rings,
+:root[data-home-layout="list"] .home-preview-symbol {
+  opacity: 0.18;
+}
+:root[data-home-layout="list"] .home-tool-content {
+  padding: 22px 27px;
+}
+:root[data-home-layout="list"] .home-tool p {
+  max-width: none;
+}
+:root[data-home-layout="list"] .home-tool ul {
+  display: none;
+}
+:root[data-home-layout="list"] .home-tool-action {
+  margin-top: 16px;
+  padding-top: 0;
+  border: 0;
+}
+
+:root[data-text-size="large"] .home-intro p {
+  font-size: 15px;
+}
+:root[data-text-size="large"] .home-tool p,
+:root[data-text-size="large"] .intro p,
+:root[data-text-size="large"] .pace-description,
+:root[data-text-size="large"] .comp-spotlight p {
+  font-size: 14px;
+}
+:root[data-text-size="large"] .home-tool li,
+:root[data-text-size="large"] .home-tool-action,
+:root[data-text-size="large"] .points-field label,
+:root[data-text-size="large"] .points-field-hint,
+:root[data-text-size="large"] .points-field-error,
+:root[data-text-size="large"] .comp-field > span,
+:root[data-text-size="large"] .comp-hint,
+:root[data-text-size="large"] .comp-error,
+:root[data-text-size="large"] .practice-task strong,
+:root[data-text-size="large"] .game-plan-table td,
+:root[data-text-size="large"] .comp-table td {
+  font-size: 13px;
+}
+:root[data-text-size="large"] .comp-field input,
+:root[data-text-size="large"] .comp-field select,
+:root[data-text-size="large"] .comp-field textarea {
+  font-size: 15px;
+}
+:root[data-text-size="large"] .comp-field small,
+:root[data-text-size="large"] .comp-table th,
+:root[data-text-size="large"] .comp-storage,
+:root[data-text-size="large"] .practice-task small {
+  font-size: 11px;
+}
+:root[data-text-size="large"] .header-inner nav .tool-tab {
+  font-size: 12px;
+}
+
+.preview-battle {
+  --preview-page: linear-gradient(120deg, #102d57, #301657);
+  --preview-panel: #294367;
+  --preview-detail: #69e5ff66;
+}
+.theme-choice:has(.preview-battle) {
+  grid-column: 1 / -1;
+}
+.custom-accent-editor {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+}
+.custom-accent-editor > label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 10px;
+  margin-bottom: 10px;
+}
+.custom-accent-editor > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.custom-accent-editor input[type="color"] {
+  width: 42px;
+  height: 36px;
+  padding: 3px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.custom-accent-editor input[type="text"] {
+  width: 100%;
+  min-width: 0;
+  padding: 9px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+}
+.custom-accent-editor input[aria-invalid="true"] {
+  border-color: var(--error-text);
+}
+.custom-accent-editor p {
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1.8;
+  margin-top: 9px;
+}
+.custom-accent-editor .custom-color-error {
+  color: var(--error-text);
+}
+.settings-section .density-choice select {
+  max-width: 150px;
+}
+@media (max-width: 500px) {
+  :root[data-home-layout="list"] .home-tool-preview {
+    width: 64px;
+    min-height: 150px;
+  }
+  :root[data-home-layout="list"] .home-tool-icon {
+    top: 20px;
+    left: 12px;
+    width: 38px;
+    height: 38px;
+  }
+  :root[data-home-layout="list"] .home-preview-label,
+  :root[data-home-layout="list"] .home-preview-bars,
+  :root[data-home-layout="list"] .home-preview-rings,
+  :root[data-home-layout="list"] .home-preview-symbol {
+    display: none;
+  }
+  :root[data-home-layout="list"] .home-tool-content {
+    padding: 18px 15px;
+  }
+  :root[data-home-layout="list"] .home-tool h2 {
+    font-size: 18px;
+  }
+  :root[data-home-layout="list"] .home-tool-action {
+    font-size: 11px;
+    gap: 7px;
+  }
+  :root[data-home-layout="list"] .home-tool p {
+    font-size: 11px;
+  }
+  :root[data-home-layout="list"][data-text-size="large"] .home-tool p {
+    font-size: 13px;
+  }
+  .settings-section .density-choice select {
+    max-width: 117px;
+  }
+  .density-choice > span {
+    flex: 1;
+  }
+}

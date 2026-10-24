@@ -17,16 +17,22 @@ const tabs = [
   { id: "home", label: "Home", icon: House },
   ...TOOLS.map((tool) => ({ ...tool, label: tool.name })),
 ];
-const tabFromHash = () => {
+const tabFromHash = (startPage = "home") => {
   if (["#zones", "#planner"].includes(window.location.hash)) return "zones";
   const id = window.location.hash.slice(1);
   if (TOOLS.some((tool) => tool.id === id)) return id;
+  if (!window.location.hash) return startPage;
   return "home";
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState(tabFromHash);
-  const [visited, setVisited] = useState(() => new Set([tabFromHash()]));
+  const appearance = useAppearance();
+  const [activeTab, setActiveTab] = useState(() =>
+    tabFromHash(appearance.settings.startPage),
+  );
+  const [visited, setVisited] = useState(
+    () => new Set([tabFromHash(appearance.settings.startPage)]),
+  );
   const plansStore = useSavedState(
     "compiq-plans-v1",
     { plans: [], activeId: null },
@@ -34,7 +40,6 @@ export default function App() {
   );
   const tabRefs = useRef({});
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const appearance = useAppearance();
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   useEffect(() => {
     setSettingsOpen(false);
@@ -59,7 +64,7 @@ export default function App() {
   }
   useEffect(() => {
     function syncTab() {
-      const id = tabFromHash();
+      const id = tabFromHash(appearance.settings.startPage);
       setVisited((previous) => new Set([...previous, id]));
       setActiveTab(id);
     }
@@ -69,7 +74,7 @@ export default function App() {
       window.removeEventListener("hashchange", syncTab);
       window.removeEventListener("popstate", syncTab);
     };
-  }, []);
+  }, [appearance.settings.startPage]);
   useEffect(() => {
     document.title =
       activeTab === "home"
