@@ -55,7 +55,10 @@
   border-color: #ffe36644;
 }
 
-/* All backgrounds remain static, and ambient glow can be disabled separately. */
+/* Isolate the decorative light behind the interface and above the background. */
+body {
+  isolation: isolate;
+}
 :root[data-background] body {
   background: var(--page-bg);
 }
@@ -106,6 +109,48 @@
     32px 32px,
     32px 32px,
     100% 100%;
+}
+:root[data-background="grid"][data-glow="true"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: color-mix(in srgb, var(--blue) 4%, transparent);
+  background-image:
+    linear-gradient(
+      color-mix(in srgb, var(--blue) 65%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--blue) 65%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 32px 32px;
+  mask-image: linear-gradient(
+    110deg,
+    transparent 42%,
+    #000 49%,
+    #000 51%,
+    transparent 58%
+  );
+  mask-size: 300% 100%;
+  mask-position: 50% 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-background="grid"][data-glow="true"][data-reduce-motion="false"]
+    body::before {
+    animation: grid-light-roll 14s linear infinite;
+  }
+}
+@keyframes grid-light-roll {
+  from {
+    mask-position: 100% 0;
+  }
+  to {
+    mask-position: 0% 0;
+  }
 }
 :root[data-corners="round"] {
   --card-radius: 23px;

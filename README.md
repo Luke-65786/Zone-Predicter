@@ -72,7 +72,7 @@ Open **Settings** in the header on desktop or mobile, or **Customize appearance*
 
 - **Themes:** Battle Royale (the new default) uses a Fortnite-inspired dark navy palette with purple/cyan lighting and victory yellow. Midnight, Graphite, Daylight, and System remain available; System uses Battle Royale for a dark device preference and Daylight for light.
 - **Accents:** Victory, Storm, Slurp, Indigo, Mint, Rose, or Amber, plus a custom color picker and hex input. Button text selects a contrasting foreground; custom link/highlight shades adjust for readable contrast in dark and light themes. Invalid hex values are never applied or saved.
-- **Backgrounds:** Aurora lighting, a static Grid, or Plain.
+- **Backgrounds:** Aurora lighting, Grid, or Plain. Grid has a slow, repeating accent light that sweeps across its lines when Ambient glow is on. The light stays behind the interface and does not capture clicks. It becomes stationary when Reduce motion or the device's reduced-motion preference is enabled, and turns off with Ambient glow.
 - **Card corners:** Soft, Rounded, or Sharp.
 - **Text size:** Standard or Larger for instructions, labels, tables, navigation, and tool form controls.
 - **Workspace width:** Standard (1,376 px), Wide (1,600 px), or Focused (1,160 px), within the available screen width.

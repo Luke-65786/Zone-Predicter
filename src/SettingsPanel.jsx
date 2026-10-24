@@ -310,7 +310,7 @@ export default function SettingsPanel({
             {choice(
               "background",
               "Background style",
-              "Set the mood behind your tools.",
+              "Grid adds a rolling light when Ambient glow is on.",
               [
                 ["aurora", "Aurora"],
                 ["grid", "Grid"],
