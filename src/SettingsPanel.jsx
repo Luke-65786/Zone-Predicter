@@ -1,0 +1,280 @@
+import React, { useEffect, useRef } from "react";
+import {
+  Check,
+  CheckCheck,
+  LayoutGrid,
+  Monitor,
+  Moon,
+  Palette,
+  RotateCcw,
+  Settings2,
+  Sparkles,
+  Sun,
+  X,
+} from "lucide-react";
+import { ACCENTS } from "./appearance.js";
+
+const themeChoices = [
+  {
+    id: "midnight",
+    name: "Midnight",
+    description: "Deep blue. Clear focus.",
+    icon: Moon,
+  },
+  {
+    id: "graphite",
+    name: "Graphite",
+    description: "A quieter shade of dark.",
+    icon: LayoutGrid,
+  },
+  {
+    id: "daylight",
+    name: "Daylight",
+    description: "Light, crisp, and open.",
+    icon: Sun,
+  },
+  {
+    id: "system",
+    name: "System",
+    description: "Follow your device.",
+    icon: Monitor,
+  },
+];
+
+export default function SettingsPanel({
+  settings,
+  update,
+  reset,
+  saved,
+  onClose,
+}) {
+  const dialogRef = useRef(null);
+  const closeRef = useRef(null);
+  const resetRef = useRef(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const previous = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = overflow;
+      previous?.focus({ preventScroll: true });
+    };
+  }, []);
+
+  function toggle(key, title, description) {
+    return (
+      <label className="preference-toggle">
+        <span>
+          <strong>{title}</strong>
+          <small id={`preference-${key}-description`}>{description}</small>
+        </span>
+        <input
+          type="checkbox"
+          aria-label={title}
+          aria-describedby={`preference-${key}-description`}
+          className="preference-checkbox"
+          checked={settings[key]}
+          onChange={(event) => update({ [key]: event.target.checked })}
+        />
+        <span className="preference-track" aria-hidden="true">
+          <span />
+        </span>
+      </label>
+    );
+  }
+
+  return (
+    <dialog
+      ref={dialogRef}
+      className="settings-dialog"
+      aria-labelledby="settings-title"
+      onKeyDown={(event) => {
+        if (event.key !== "Tab") return;
+        if (event.shiftKey && document.activeElement === closeRef.current) {
+          event.preventDefault();
+          resetRef.current?.focus();
+        } else if (
+          !event.shiftKey &&
+          document.activeElement === resetRef.current
+        ) {
+          event.preventDefault();
+          closeRef.current?.focus();
+        }
+      }}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const box = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < box.left ||
+          event.clientX > box.right ||
+          event.clientY < box.top ||
+          event.clientY > box.bottom
+        )
+          onClose();
+      }}
+    >
+      <div className="settings-inner">
+        <header className="settings-heading">
+          <div>
+            <span className="settings-eyebrow">
+              <Settings2 size={12} /> YOUR WORKSPACE
+            </span>
+            <h2 id="settings-title">
+              Make it yours<span>.</span>
+            </h2>
+            <p>A little more you. The same game plan.</p>
+          </div>
+          <button
+            className="icon-button settings-close"
+            aria-label="Close settings"
+            ref={closeRef}
+            onClick={onClose}
+            autoFocus
+          >
+            <X size={20} />
+          </button>
+        </header>
+        <div className="settings-scroll">
+          <fieldset className="settings-section">
+            <legend>
+              <Palette size={15} /> Theme
+            </legend>
+            <div className="theme-choices">
+              {themeChoices.map(({ id, name, description, icon: Icon }) => (
+                <label
+                  key={id}
+                  className={`theme-choice ${settings.theme === id ? "choice-selected" : ""}`}
+                >
+                  <input
+                    className="visually-hidden"
+                    type="radio"
+                    name="appearance-theme"
+                    value={id}
+                    aria-label={`${name} theme`}
+                    checked={settings.theme === id}
+                    onChange={() => update({ theme: id })}
+                  />
+                  <span
+                    className={`theme-thumbnail preview-${id}`}
+                    aria-hidden="true"
+                  >
+                    <i className="preview-nav" />
+                    <span className="preview-content">
+                      <i />
+                      <span>
+                        <b />
+                        <i />
+                        <i />
+                      </span>
+                    </span>
+                    <span className="theme-preview-orb" />
+                  </span>
+                  <span className="theme-caption">
+                    <Icon size={13} />
+                    <strong>{name}</strong>
+                    {settings.theme === id && <Check size={13} />}
+                  </span>
+                  <small>{description}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="settings-section">
+            <legend>
+              <Sparkles size={15} /> Accent color
+            </legend>
+            <p className="settings-description">
+              Your buttons, highlights, and finishing touches.
+            </p>
+            <div className="accent-choices">
+              {Object.entries(ACCENTS).map(([id, accent]) => (
+                <label
+                  key={id}
+                  className={`accent-choice ${settings.accent === id ? "choice-selected" : ""}`}
+                >
+                  <input
+                    className="visually-hidden"
+                    type="radio"
+                    name="appearance-accent"
+                    value={id}
+                    aria-label={`${accent.name} accent`}
+                    checked={settings.accent === id}
+                    onChange={() => update({ accent: id })}
+                  />
+                  <span
+                    className="accent-swatch"
+                    style={{ background: accent.primary }}
+                  >
+                    {settings.accent === id && <Check size={14} />}
+                  </span>
+                  <small>{accent.name}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <section
+            className="settings-section display-settings"
+            aria-labelledby="display-heading"
+          >
+            <h3 id="display-heading">
+              <LayoutGrid size={15} /> Display
+            </h3>
+            <label className="density-choice" htmlFor="appearance-density">
+              <span>
+                <strong>Layout spacing</strong>
+                <small>Make room for the way you work.</small>
+              </span>
+              <select
+                aria-label="Layout spacing"
+                id="appearance-density"
+                value={settings.density}
+                onChange={(event) => update({ density: event.target.value })}
+              >
+                <option value="comfortable">Comfortable</option>
+                <option value="compact">Compact</option>
+              </select>
+            </label>
+            {toggle(
+              "stickyNav",
+              "Sticky navigation",
+              "Keep both tools within reach as you scroll.",
+            )}
+            {toggle(
+              "glow",
+              "Ambient glow",
+              "Add a soft wash of color to the background.",
+            )}
+            {toggle(
+              "reduceMotion",
+              "Reduce motion",
+              "Minimize transitions. Device preferences are respected.",
+            )}
+          </section>
+          <div className="settings-reassurance">
+            <CheckCheck size={15} />
+            <p>
+              Appearance only. Your points targets, zone settings, and map stay
+              as they are.
+            </p>
+          </div>
+        </div>
+        <footer className="settings-footer">
+          <span className={saved ? "preferences-saved" : "preferences-unsaved"}>
+            <span />
+            {saved ? "Saved in this browser" : "Applied for this session"}
+          </span>
+          <button onClick={reset} ref={resetRef} className="preferences-reset">
+            <RotateCcw size={13} /> Reset appearance
+          </button>
+        </footer>
+      </div>
+    </dialog>
+  );
+}

@@ -37,10 +37,25 @@ The homepage opens the **Points calculator** tab (`#points`). Target points and 
 
 The **Zone predictor** tab is at `#zones`; old `#planner` links still open it. Tabs support arrow keys, Home/End, browser Back/Forward, and direct links. Switching tabs preserves calculator inputs, the zone forecast, and filter settings. The map loads only when the zone tab is first opened. The existing `zoneiq-setup-v2` browser key is intentionally retained to preserve earlier zone setups. The website and exported zone plans are branded CompIQ; the repository name and deployed URL remain unchanged.
 
+## Appearance settings
+
+Open **Settings** in the header on desktop or mobile. Changes apply immediately to both tools and are stored separately under `compiq-appearance-v1`:
+
+- **Themes:** Midnight (the default), Graphite, Daylight, or System. System follows changes to the device's color preference.
+- **Accents:** Indigo, Mint, Rose, or Amber for buttons, highlights, and progress bars.
+- **Spacing:** Comfortable or Compact, which reduces vertical spacing without shrinking text.
+- **Sticky navigation:** keeps the tool tabs visible while scrolling; sticky side controls account for the header height.
+- **Ambient glow:** toggles the soft background and result-card illumination.
+- **Reduced motion:** minimizes transitions; the device's own reduced-motion preference is also respected.
+
+The drawer supports keyboard focus wrapping, Escape, backdrop dismissal, and focus return to its trigger. The saved theme is applied before the React interface renders. Invalid saved preferences recover to defaults; when browser storage is blocked, preferences still work for the session and the menu explains that they were not saved.
+
+**Reset appearance** resets only appearance preferences. Calculator inputs, zone forecasts, fixed 32%/60% settings, and filters remain intact. Themes do not recolor the selected map image or its semantic green/red POI overlay. Preferences are local to this browser; no account or extra service is required.
+
 ## Zone predictor
 
 - Use the map image selected by the user: `https://fortnite-api.com/images/map_en.png`. The GitHub Pages workflow downloads and bundles this PNG with the site. No map API is used. Local development falls back to the selected image URL when the bundled file is absent.
-- Dark theme throughout, including controls, map overlays, results, exports controls, notifications, help, and browser form controls. The map image retains its original colors.
+- Midnight, Graphite, Daylight, or device-matched themes across controls, results, notifications, help, and browser form controls. The map image and green/red POI meanings retain their original colors.
 - Place zone 1's center. Its radius is locked at 32% of map width, and radius retention is locked at 60% per subsequent zone. There are no radius or shrink sliders. Set your player marker optionally.
 - Estimate zone 4 with 2,000 paths, each simulating zones 2, 3, and 4 sequentially. Circle sizes use the fixed 60% radius retention for each of the three transitions.
 - View zone 4 center density, the boundary containing 80% of simulated centers, and a representative fully nested path. Toggle intermediate zones 2 and 3 and the direct rotation route.

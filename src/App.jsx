@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Calculator, Crosshair, Zap } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Calculator, Crosshair, Settings2, Zap } from "lucide-react";
 import PointsCalculator from "./PointsCalculator.jsx";
 import ZonePlanner from "./ZonePlanner.jsx";
+import SettingsPanel from "./SettingsPanel.jsx";
+import useAppearance from "./useAppearance.js";
 
 const tabs = [
   { id: "points", label: "Points calculator", icon: Calculator },
@@ -16,6 +18,12 @@ export default function App() {
     () => tabFromHash() === "zones",
   );
   const tabRefs = useRef({});
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const appearance = useAppearance();
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  useEffect(() => {
+    setSettingsOpen(false);
+  }, [activeTab]);
 
   function selectTab(id) {
     if (id === "zones") setVisitedZones(true);
@@ -95,6 +103,15 @@ export default function App() {
               Every point. Every rotation.
             </span>
           </div>
+          <button
+            className="settings-trigger"
+            aria-label="Open settings"
+            title="Customize your workspace"
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings2 size={17} />
+            <span>Settings</span>
+          </button>
         </div>
       </header>
       <main id="main-content">
@@ -134,6 +151,15 @@ export default function App() {
           <span className="footer-motto">One toolkit. More game sense.</span>
         </div>
       </footer>
+      {settingsOpen && (
+        <SettingsPanel
+          settings={appearance.settings}
+          update={appearance.update}
+          reset={appearance.reset}
+          saved={appearance.saved}
+          onClose={closeSettings}
+        />
+      )}
     </>
   );
 }
