@@ -1,6 +1,6 @@
-# ZoneIQ
+# CompIQ
 
-A responsive Fortnite storm-planning app built with React and Vite.
+A dark Fortnite competitive toolkit built with React and Vite, with separate points-calculator and zone-predictor tabs.
 
 ## GitHub Pages deployment
 
@@ -19,7 +19,25 @@ npm run dev
 
 Vite listens on port 5173. Use `npm run build` for the production bundle, `npm run preview` to serve that bundle, and `npm test` for the geometry tests.
 
-## Features
+## Points calculator
+
+The homepage opens the **Points calculator** tab (`#points`). Target points and total games are separate inputs. Optional points-earned and games-played inputs calculate the remaining pace:
+
+`pointsPerGame = max(0, targetPoints − pointsEarned) ÷ (totalGames − gamesPlayed)`
+
+- **312 points in 12 games = 26 points per game.**
+- With 100 points earned in 4 of those games, 212 points remain over 8 games: **26.5 per game**.
+- Fractional averages are displayed to two decimal places. A whole-point plan preserves the exact goal; 313 points in 12 games becomes one 27-point game and eleven 26-point games.
+- The game-by-game table includes remaining game numbers and running totals, with 12-row pagination for longer plans.
+- Invalid values, games played exceeding the allowance, exhausted games, and already achieved targets have separate outcomes. A positive average below 0.01 is shown as `<0.01` rather than zero.
+- Inputs save in this browser under `compiq-points-v1`. The tool calculates immediately and needs no network request, event data, or scoring API.
+- Goals are entered manually. The tool does not infer placement/elimination scoring, qualification thresholds, or future match scores.
+
+## Tabs and saved state
+
+The **Zone predictor** tab is at `#zones`; old `#planner` links still open it. Tabs support arrow keys, Home/End, browser Back/Forward, and direct links. Switching tabs preserves calculator inputs, the zone forecast, and filter settings. The map loads only when the zone tab is first opened. The existing `zoneiq-setup-v2` browser key is intentionally retained to preserve earlier zone setups. The website and exported zone plans are branded CompIQ; the repository name and deployed URL remain unchanged.
+
+## Zone predictor
 
 - Use the map image selected by the user: `https://fortnite-api.com/images/map_en.png`. The GitHub Pages workflow downloads and bundles this PNG with the site. No map API is used. Local development falls back to the selected image URL when the bundled file is absent.
 - Dark theme throughout, including controls, map overlays, results, exports controls, notifications, help, and browser form controls. The map image retains its original colors.
@@ -31,7 +49,7 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 - Zone 1 setup persists in local storage. Moving its center clears the previous estimate and its side overlay; generate again to recompute them. Legacy browser settings are normalized to the locked 32% radius and 60% retention on restore, while preserving a valid center and player position.
 - Use the map with a pointer, touch, or arrow keys. Shift + arrow moves in larger steps. Numeric zone 1 position controls are under “Fine-tune placement.”
 
-## What the model means
+## Zone prediction model
 
 This is a manual geometric scenario tool using the specific map image selected by the user. It does not fetch a map from an API or automatically choose a newer island. It does not identify your match or game mode and has no match telemetry, hidden storm data, or connection to Epic's game servers.
 

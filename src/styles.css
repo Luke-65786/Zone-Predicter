@@ -2156,3 +2156,904 @@ footer {
     font-size: 9px;
   }
 }
+
+/* CompIQ competitive toolkit navigation. */
+[hidden] {
+  display: none !important;
+}
+.competitive-header {
+  gap: 42px;
+}
+.header-inner .tool-tabs {
+  gap: 10px;
+}
+.header-inner nav .tool-tab {
+  height: 100%;
+  position: relative;
+  padding: 0 15px;
+  gap: 9px;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+.header-inner nav .tool-tab:hover {
+  color: var(--ink);
+  background: #a3b2ff05;
+}
+.header-inner nav .tool-tab.tab-active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+.footer-motto {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+#main-content {
+  min-height: calc(100vh - 163px);
+}
+.tool-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 8px;
+  letter-spacing: 1.1px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 11px 13px;
+  white-space: nowrap;
+  margin-top: 22px;
+}
+.tool-label svg {
+  color: var(--blue);
+}
+.points-page {
+  padding-bottom: 44px;
+}
+.points-workspace {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.points-controls {
+  position: sticky;
+  top: 24px;
+}
+.points-form-card .card-heading {
+  padding: 21px 22px;
+  gap: 9px;
+}
+.points-form-card .card-heading .icon-button {
+  margin-left: auto;
+}
+.points-form {
+  padding: 25px 22px 20px;
+}
+.points-field {
+  min-width: 0;
+  margin-bottom: 24px;
+}
+.points-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.points-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface-subtle);
+  border: 1px solid #33425f;
+  border-radius: 7px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.points-input-wrap:focus-within {
+  border-color: #8397ff;
+  box-shadow: 0 0 0 3px #8397ff12;
+}
+.points-input-wrap > svg {
+  color: #7588ae;
+}
+.points-input-wrap input {
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+  color: var(--ink);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.points-input-wrap input:focus-visible {
+  outline: none;
+}
+.points-input-wrap input::-webkit-inner-spin-button,
+.points-input-wrap input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+.points-input-wrap input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.points-field-hint,
+.points-field-error {
+  font-size: 9px;
+  line-height: 1.7;
+  margin-top: 8px;
+  min-height: 15px;
+}
+.points-field-hint {
+  color: var(--text-muted);
+}
+.points-field-error {
+  color: #ffa0ae;
+}
+.input-invalid {
+  border-color: #c66a80;
+}
+.progress-input-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 21px;
+  margin-bottom: 16px;
+}
+.progress-input-heading > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.progress-input-heading small {
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+.points-progress-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.points-progress-fields .points-field {
+  margin-bottom: 15px;
+}
+.points-progress-fields .points-field label {
+  font-size: 10px;
+}
+.points-progress-fields .points-input-wrap {
+  gap: 7px;
+  padding: 10px;
+}
+.points-progress-fields input {
+  font-size: 21px;
+}
+.points-progress-fields .points-field-hint {
+  font-size: 8px;
+  min-height: 27px;
+}
+.points-auto-note {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding-top: 6px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.points-auto-note .live-dot {
+  background: #6cbd9b;
+}
+.calculator-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 6px;
+  color: #8395b6;
+}
+.calculator-note > svg {
+  margin-top: 1px;
+  color: var(--blue);
+}
+.calculator-note p {
+  font-size: 10px;
+  line-height: 1.9;
+}
+.points-results {
+  min-width: 0;
+}
+.pace-card {
+  position: relative;
+  padding: 27px 30px 25px;
+  background:
+    radial-gradient(ellipse at 100% 0%, #5262cb26, transparent 65%),
+    linear-gradient(120deg, #182443, #152039);
+  border: 1px solid #384b79;
+  border-radius: 11px;
+  overflow: hidden;
+  box-shadow: 0 5px 25px #0000000b;
+}
+.pace-card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: #9dadf3;
+}
+.pace-card-heading > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+.pace-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #91a5ff;
+  box-shadow: 0 0 10px #8397ff55;
+}
+.pace-number {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+.pace-number > strong {
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 69px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -3.5px;
+  color: #edf1ff;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.pace-number > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.pace-number > div > span {
+  font-size: 15px;
+  font-weight: 500;
+  color: #c7d0eb;
+}
+.pace-number small {
+  font-size: 7px;
+  letter-spacing: 1.3px;
+  color: #8c9cc3;
+}
+.pace-description {
+  font-size: 11px;
+  line-height: 1.9;
+  color: #a8b6d4;
+  margin-top: 13px;
+  max-width: 610px;
+}
+.pace-equation {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding-top: 20px;
+  margin-top: 22px;
+  border-top: 1px solid #354568;
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #c7d2ed;
+  flex-wrap: wrap;
+}
+.pace-equation i {
+  font-style: normal;
+  color: #7689b4;
+  font-weight: 400;
+}
+.pace-equation > span:last-of-type {
+  color: #b0bcff;
+}
+.pace-equation small {
+  font-family: "DM Sans Variable", sans-serif;
+  font-weight: 400;
+  font-size: 7px;
+  letter-spacing: 1.1px;
+  color: #8a9abe;
+  margin-left: 0;
+}
+.goal-achieved {
+  border-color: #336657;
+  background:
+    radial-gradient(ellipse at 100% 0%, #39c78a18, transparent 65%), #142b2c;
+}
+.goal-achieved .pace-card-heading,
+.goal-achieved .pace-number > strong {
+  color: #89e5b8;
+}
+.goal-achieved .pace-dot {
+  background: #89e5b8;
+}
+.points-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 16px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.points-metrics > div {
+  background: var(--surface);
+  padding: 20px 21px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.points-metrics span {
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+.points-metrics strong {
+  font-family: "Manrope Variable", sans-serif;
+  color: #c0ccff;
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.points-progress-card {
+  margin-top: 16px;
+  padding: 20px 22px;
+}
+.points-progress-card > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.points-progress-card strong {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.points-progress-card strong small {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.target-progress-track {
+  height: 5px;
+  background: #293853;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.target-progress-track > span {
+  height: 100%;
+  display: block;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #5365ed, #a2b5ff);
+  transition: width 0.2s;
+}
+.points-progress-card > small {
+  display: block;
+  font-size: 8px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+.game-plan-card {
+  margin-top: 22px;
+  overflow: hidden;
+}
+.game-plan-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 23px 23px 15px;
+  gap: 15px;
+}
+.game-plan-heading .eyebrow {
+  font-size: 7px;
+  letter-spacing: 1.5px;
+  color: #8799bc;
+}
+.game-plan-heading h2 {
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+  margin-top: 7px;
+}
+.plan-count {
+  font-size: 9px;
+  color: #a5b3d2;
+  padding: 6px 9px;
+  background: #1e2b45;
+  border: 1px solid #2b3a56;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.whole-point-plan {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.9;
+  padding: 0 23px 21px;
+  max-width: 750px;
+}
+.whole-point-plan strong {
+  font-weight: 600;
+  color: #b7c5e4;
+}
+.game-plan-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.game-plan-table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.game-plan-table thead {
+  background: #0f192c;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.game-plan-table th {
+  padding: 12px 23px;
+  font-size: 8px;
+  font-weight: 500;
+  color: #8ea0c1;
+  white-space: nowrap;
+}
+.game-plan-table td {
+  padding: 12px 23px;
+  border-bottom: 1px solid #243149;
+  color: #c2cde4;
+  white-space: nowrap;
+}
+.game-plan-table td:first-child span {
+  display: inline-flex;
+  align-items: center;
+  color: #91a3c6;
+  font-size: 8px;
+  letter-spacing: 0.7px;
+}
+.game-plan-table td:nth-child(2) {
+  color: #b3c1ff;
+  font-weight: 600;
+}
+.game-plan-table td small {
+  font-size: 9px;
+  font-weight: 400;
+  color: #7f93b7;
+  margin-left: 3px;
+}
+.game-plan-table tr:last-child td {
+  border-bottom: 0;
+}
+.game-plan-table tbody tr:hover {
+  background: #a3b2ff05;
+}
+.game-plan-table td:last-child {
+  width: 25%;
+}
+.row-progress-track {
+  display: block;
+  max-width: 110px;
+  height: 3px;
+  border-radius: 5px;
+  background: #263650;
+}
+.row-progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+  background: #6277d9;
+}
+.game-plan-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  border-top: 1px solid var(--line);
+  padding: 10px 20px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.game-plan-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+.game-plan-pagination .icon-button {
+  border: 1px solid var(--line);
+}
+.game-plan-pagination button:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+.plan-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 22px;
+  background: #111b2e;
+  border-top: 1px solid var(--line);
+  color: #8ea0c1;
+  font-size: 8px;
+  line-height: 1.8;
+}
+.points-storage-note {
+  font-size: 8px;
+  color: var(--text-muted);
+  padding: 13px 4px 0;
+  line-height: 1.8;
+}
+.competitive-bottom-note {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 23px 25px;
+  margin-top: 36px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #131d31a8;
+}
+.competitive-bottom-note > span {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #202d49;
+  color: #9dacff;
+  flex-shrink: 0;
+}
+.competitive-bottom-note h2 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c4cee3;
+}
+.competitive-bottom-note p {
+  font-size: 10px;
+  line-height: 1.8;
+  margin-top: 5px;
+  color: #899dbc;
+}
+.competitive-bottom-note > a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #adbbff;
+  margin-left: auto;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .competitive-header {
+    gap: 22px;
+  }
+  .header-inner .tool-tabs {
+    gap: 3px;
+  }
+  .header-inner nav .tool-tab {
+    font-size: 11px;
+    padding: 0 12px;
+  }
+  .competitive-header .brand-beta {
+    display: none;
+  }
+  .points-workspace {
+    grid-template-columns: 310px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .points-metrics > div {
+    padding: 18px 15px;
+  }
+  .game-plan-table td,
+  .game-plan-table th {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .pace-card {
+    padding: 25px;
+  }
+  .tool-label {
+    font-size: 7px;
+  }
+  .competitive-bottom-note > a {
+    font-size: 9px;
+  }
+}
+@media (max-width: 800px) {
+  .site-header:has(.competitive-header) {
+    height: 110px;
+  }
+  .competitive-header {
+    flex-wrap: wrap;
+    align-content: space-between;
+    padding: 17px 24px 0;
+    gap: 0;
+    height: 100%;
+  }
+  .competitive-header .brand {
+    height: 30px;
+  }
+  .header-inner .tool-tabs {
+    height: 47px;
+    width: 100%;
+    gap: 8px;
+    margin-left: 0;
+  }
+  .header-inner nav .tool-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+  .competitive-header .header-right {
+    display: none;
+  }
+  .points-intro .tool-label {
+    display: none;
+  }
+  .points-workspace {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .points-controls {
+    position: static;
+  }
+  .points-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    padding: 22px;
+  }
+  .points-field {
+    margin: 0;
+  }
+  .points-field-hint {
+    min-height: 28px;
+  }
+  .progress-input-heading {
+    grid-column: 1/-1;
+    margin: 0;
+    padding-top: 18px;
+  }
+  .points-progress-fields {
+    grid-column: 1/-1;
+    gap: 18px;
+  }
+  .points-progress-fields .points-field {
+    margin: 0;
+  }
+  .points-auto-note {
+    grid-column: 1/-1;
+    padding-top: 0;
+  }
+  .points-progress-fields .points-field-hint {
+    min-height: 0;
+  }
+  .calculator-note {
+    padding: 12px 4px 0;
+  }
+  .calculator-note p {
+    font-size: 9px;
+  }
+  .pace-number > strong {
+    font-size: 62px;
+  }
+  .points-metrics strong {
+    font-size: 23px;
+  }
+  .competitive-bottom-note {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 13px;
+    padding: 20px;
+  }
+  .competitive-bottom-note > div {
+    flex: 1;
+  }
+  .competitive-bottom-note > a {
+    grid-column: 2;
+    margin-left: 0;
+  }
+  .footer-motto {
+    display: none;
+  }
+  .points-page {
+    padding-bottom: 30px;
+  }
+  .points-intro h1 {
+    font-size: 32px;
+    max-width: 600px;
+  }
+}
+@media (max-width: 500px) {
+  .competitive-header {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .competitive-header .brand {
+    font-size: 23px;
+  }
+  .header-inner nav .tool-tab {
+    font-size: 10px;
+    gap: 7px;
+    padding: 0 7px;
+  }
+  .points-intro h1 {
+    font-size: 31px;
+    line-height: 1.3;
+    max-width: 330px;
+  }
+  .points-intro p {
+    max-width: 330px;
+  }
+  .points-form-card .card-heading {
+    padding: 18px;
+  }
+  .points-form {
+    padding: 18px;
+    gap: 15px;
+  }
+  .points-input-wrap {
+    padding: 11px;
+    gap: 7px;
+  }
+  .points-input-wrap input {
+    font-size: 25px;
+  }
+  .points-field label {
+    font-size: 10px;
+  }
+  .points-field-hint,
+  .points-field-error {
+    font-size: 8px;
+  }
+  .points-progress-fields .points-input-wrap {
+    padding: 10px 8px;
+  }
+  .points-progress-fields .points-input-wrap > svg {
+    display: none;
+  }
+  .points-progress-fields input {
+    font-size: 21px;
+  }
+  .points-auto-note {
+    font-size: 8px;
+  }
+  .calculator-note p {
+    font-size: 8px;
+  }
+  .pace-card {
+    padding: 22px;
+  }
+  .pace-card-heading > span {
+    font-size: 7px;
+    letter-spacing: 1.2px;
+  }
+  .pace-number {
+    gap: 13px;
+    margin-top: 19px;
+  }
+  .pace-number > strong {
+    font-size: 57px;
+    letter-spacing: -2.8px;
+  }
+  .pace-number > div > span {
+    font-size: 12px;
+  }
+  .pace-number small {
+    font-size: 6px;
+  }
+  .pace-description {
+    font-size: 10px;
+  }
+  .pace-equation {
+    font-size: 13px;
+    gap: 10px;
+    padding-top: 16px;
+    margin-top: 18px;
+  }
+  .points-metrics > div {
+    padding: 16px 12px;
+  }
+  .points-metrics span {
+    font-size: 6px;
+    letter-spacing: 0.7px;
+    line-height: 1.7;
+  }
+  .points-metrics strong {
+    font-size: 21px;
+  }
+  .points-progress-card {
+    padding: 18px;
+  }
+  .game-plan-heading {
+    padding: 20px 18px 13px;
+  }
+  .game-plan-heading h2 {
+    font-size: 15px;
+  }
+  .game-plan-heading .eyebrow {
+    font-size: 6px;
+  }
+  .plan-count {
+    font-size: 8px;
+    padding: 5px 7px;
+  }
+  .whole-point-plan {
+    font-size: 9px;
+    padding: 0 18px 17px;
+  }
+  .game-plan-table td,
+  .game-plan-table th {
+    padding-left: 18px;
+    padding-right: 12px;
+  }
+  .game-plan-table th:nth-child(4),
+  .game-plan-table td:nth-child(4) {
+    display: none;
+  }
+  .game-plan-table th {
+    font-size: 7px;
+  }
+  .game-plan-table td {
+    font-size: 10px;
+  }
+  .game-plan-table td:first-child span {
+    font-size: 7px;
+  }
+  .game-plan-table td small {
+    font-size: 8px;
+  }
+  .plan-footer {
+    padding: 12px 16px;
+    font-size: 7px;
+    align-items: flex-start;
+  }
+  .plan-footer > svg {
+    margin-top: 1px;
+  }
+  .competitive-bottom-note h2 {
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .competitive-bottom-note p {
+    font-size: 9px;
+  }
+  .competitive-bottom-note > a {
+    font-size: 9px;
+  }
+  .footer-inner > p {
+    max-width: 230px;
+  }
+}

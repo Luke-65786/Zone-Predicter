@@ -20,7 +20,7 @@ async function mockMap(page) {
 }
 async function openPlanner(page) {
   await mockMap(page);
-  await page.goto("/");
+  await page.goto("/#zones");
   await expect(
     page.getByText("Your Fortnite map", { exact: true }),
   ).toBeVisible();
@@ -174,7 +174,7 @@ test("image failure shows a clear error and can be retried", async ({
 }) => {
   await page.route(bundledImage, (route) => route.abort("failed"));
   await page.route(MAP_SOURCE_URL, (route) => route.abort("failed"));
-  await page.goto("/");
+  await page.goto("/#zones");
   await expect(
     page.getByText("Your map image couldn’t load", { exact: true }),
   ).toBeVisible();
@@ -199,7 +199,7 @@ test("invalid image cannot be presented as a loaded map", async ({ page }) => {
       body: "invalid image data",
     }),
   );
-  await page.goto("/");
+  await page.goto("/#zones");
   await expect(
     page.getByText("Your map image couldn’t load", { exact: true }),
   ).toBeVisible();
@@ -239,7 +239,7 @@ test("uses the exact supplied image URL when a local bundle is not present", asy
   await page.route(MAP_SOURCE_URL, (route) =>
     route.fulfill({ contentType: "image/png", body: mapPng }),
   );
-  await page.goto("/");
+  await page.goto("/#zones");
   await expect(
     page.getByText("Your Fortnite map", { exact: true }),
   ).toBeVisible();
@@ -342,25 +342,21 @@ test("deadside overlay counts visible mapped POIs in its facing direction and wo
     .click();
   await expect(page.getByTestId("zone-sides-overlay")).toBeVisible();
   await expect(page.getByTestId("poi-marker")).toHaveCount(13);
-  const center = await page
-    .getByTestId("zone-4")
-    .evaluate((node) => ({
-      x: +node.getAttribute("cx"),
-      y: +node.getAttribute("cy"),
-      radius: +node.getAttribute("r"),
-    }));
+  const center = await page.getByTestId("zone-4").evaluate((node) => ({
+    x: +node.getAttribute("cx"),
+    y: +node.getAttribute("cy"),
+    radius: +node.getAttribute("r"),
+  }));
   const transform = await page
     .getByTestId("zone-sides-overlay")
     .getAttribute("transform");
   const angle = (+transform.match(/rotate\(([^)]+)\)/)[1] * Math.PI) / 180;
-  const points = await page
-    .getByTestId("poi-marker")
-    .evaluateAll((nodes) =>
-      nodes.map((node) => ({
-        x: +node.getAttribute("cx"),
-        y: +node.getAttribute("cy"),
-      })),
-    );
+  const points = await page.getByTestId("poi-marker").evaluateAll((nodes) =>
+    nodes.map((node) => ({
+      x: +node.getAttribute("cx"),
+      y: +node.getAttribute("cy"),
+    })),
+  );
   const green = points.filter(
     (poi) =>
       (poi.x - center.x) * Math.cos(angle) +
