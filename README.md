@@ -1,6 +1,6 @@
 # CompIQ
 
-A Fortnite competitive toolkit built with React and Vite, with a home page for choosing the points calculator or zone predictor.
+A Fortnite competitive toolkit built with React and Vite, with a home page for choosing six tools: points calculator, zone predictor, tournament tracker, scoring calculator, tournament planner, and practice checklist.
 
 ## GitHub Pages deployment
 
@@ -21,7 +21,27 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 
 ## Home page
 
-The default page and `#home` open a tool chooser with links to the **Points calculator** and **Zone predictor**. The Home tab and CompIQ logos return here from either tool. Both tools mount only when first opened, so the chooser makes no map request or changes to saved calculator inputs. Returning home preserves tool state, and its appearance shortcut opens the shared Settings menu.
+The default page and `#home` open a chooser for all six tools. The Home tab and CompIQ logos return here from any tool. Tools mount only when first opened, so the chooser makes no map request or changes to saved calculator inputs. Returning home preserves tool state, and its appearance shortcut opens the shared Settings menu. The navigation row scrolls horizontally on smaller screens and brings the active tab into view.
+
+## Tournament tracker (`#tracker`)
+
+Enter a target and game allowance, or load these from a saved tournament plan. Log each game's total points, optional finish, eliminations, and notes. The tracker shows earned points, remaining games, the required average, and whether the results are ahead or behind the straight-line pace for the target. Edit game points directly, remove games, or clear the log; removals can be undone. Achieved targets and exhausted game allowances have separate results. Game limits are 1–200 and individual scores and targets are whole points up to 1,000,000. State saves under `compiq-tracker-v1`.
+
+## Scoring calculator (`#scoring`)
+
+Supply the event's whole points per elimination (including zero) and placement tiers. A tier records the **total** placement points at that threshold, not an incremental bonus: Top 1 = 20 and Top 10 = 5 means a win earns 20 placement points, finishes 2–10 earn 5, and lower finishes earn zero. The calculator sorts tiers, rejects duplicates and tiers that reward worse finishes more, calculates individual game scores, and lists the minimum eliminations needed in each placement band to meet a game target. Zero elimination scoring reports unreachable targets without division by zero. Scoring is user-defined; no official Fortnite format or cutoff is assumed. Rules and calculator inputs save under `compiq-scoring-v1`.
+
+## Combined tournament planner (`#plans`)
+
+Tournament plans, drop planning, and rotation notes share one workspace. Save up to 50 named plans, each with its own event date, team format, optional points/game target, drop notes, and rotation notes. A new plan is an unsaved draft until **Save tournament plan** is selected; saved plans update automatically. Plans can be switched, duplicated, downloaded as readable JSON with map coordinates, or deleted with an undo option. The tracker can load a saved plan's target without replacing its game log.
+
+On the same Fortnite image used by the zone predictor, choose a landing marker, backup marker, loot route, rotation route, or good-position marker. Click/tap to place points; route waypoints connect in insertion order. Arrow keys move the map cursor (Shift moves faster), and Enter/Space places a point. Marker labels are optional. Remove the last point, clear the selected layer, or undo the last map edit. Plans keep their own independent coordinates, including up to 300 waypoints per route and 50 good positions. Map loading failures show a retry without blocking saved notes or targets. Plans persist under `compiq-plans-v1`; the map loads only after opening this tool or the zone predictor.
+
+## Practice checklist (`#practice`)
+
+Start with warm-up, aim, building, scrims, and review drills. Add custom named drills with a category and 1–180 estimated minutes, check off completed work, and write a session takeaway. Choose a date to revisit a session or start a fresh one. The task library is shared between dates, while checks and notes are independent for each date (the most recent 366 session dates are retained). Estimated minutes are not a running timer. Session resets and drill removals can be undone until the next edit. State saves under `compiq-practice-v1`.
+
+All tools work without accounts. Data is local to the current browser and device; no cloud sync is implied. If browser storage is blocked, tools still work for the current session and show a storage notice. Appearance preferences remain separate from tool data.
 
 ## Points calculator
 
@@ -40,11 +60,11 @@ The **Points calculator** tab (`#points`) starts with all fields empty. Enter ta
 
 ## Tabs and saved state
 
-The **Zone predictor** tab is at `#zones`; old `#planner` links still open it. Tabs support arrow keys, Home/End, browser Back/Forward, and direct links. Switching tabs preserves calculator inputs, the zone forecast, and filter settings. The map loads only when the zone tab is first opened. The existing `zoneiq-setup-v2` browser key is intentionally retained to preserve earlier zone setups. The website and exported zone plans are branded CompIQ; the repository name and deployed URL remain unchanged.
+The **Zone predictor** tab is at `#zones`; old `#planner` links still open it. Tabs support arrow keys, Home/End, browser Back/Forward, and direct links. Switching tabs preserves calculator inputs, the zone forecast, and filter settings. Each map loads when its tool is first opened. The existing `zoneiq-setup-v2` browser key is intentionally retained to preserve earlier zone setups. The website and exported zone plans are branded CompIQ; the repository name and deployed URL remain unchanged.
 
 ## Appearance settings
 
-Open **Settings** in the header on desktop or mobile, or **Customize appearance** on the home page. Changes apply immediately to the home page and both tools and are stored separately under `compiq-appearance-v1`:
+Open **Settings** in the header on desktop or mobile, or **Customize appearance** on the home page. Changes apply immediately to the home page and all tools and are stored separately under `compiq-appearance-v1`:
 
 - **Themes:** Midnight (the default), Graphite, Daylight, or System. System follows changes to the device's color preference.
 - **Accents:** Indigo, Mint, Rose, or Amber for buttons, highlights, and progress bars.

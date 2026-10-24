@@ -244,7 +244,7 @@ export default function SettingsPanel({
             {toggle(
               "stickyNav",
               "Sticky navigation",
-              "Keep both tools within reach as you scroll.",
+              "Keep your tools within reach as you scroll.",
             )}
             {toggle(
               "glow",

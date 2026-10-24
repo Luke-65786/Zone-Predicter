@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("home offers both tools without loading a map or changing saved inputs", async ({ page }) => {
+test("home offers every tool without loading a map or changing saved inputs", async ({ page }) => {
   const requests = [];
   page.on("request", (request) => {
     if (/fortnite-map\.png|fortnite-api\.com/.test(request.url())) requests.push(request.url());
@@ -10,6 +10,9 @@ test("home offers both tools without loading a map or changing saved inputs", as
   await expect(page.getByRole("tab", { name: "Home", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("link", { name: "Open points calculator" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open zone predictor" })).toBeVisible();
+  for (const name of ["tournament tracker", "scoring calculator", "tournament planner", "practice checklist"]) {
+    await expect(page.getByRole("link", { name: `Open ${name}` })).toBeVisible();
+  }
   await expect(page.getByLabel("Target points", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("application")).toHaveCount(0);
   await page.waitForLoadState("networkidle");
@@ -61,10 +64,13 @@ test("mobile home and its appearance shortcut fit the screen and support saved t
   await expect(page.getByRole("link", { name: "Open points calculator" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open zone predictor" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  const tabs = page.getByRole("tab");
-  for (const tab of await tabs.all()) {
-    const box = await tab.boundingBox();
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(320);
-  }
+  const home = await page.getByRole("tab", { name: "Home", exact: true }).boundingBox();
+  expect(home.x).toBeGreaterThanOrEqual(0);
+  expect(home.x + home.width).toBeLessThanOrEqual(320);
+  await page.getByRole("tab", { name: "Home", exact: true }).focus();
+  await page.keyboard.press("End");
+  await expect(page.getByRole("tab", { name: "Practice checklist" })).toBeFocused();
+  const practice = await page.getByRole("tab", { name: "Practice checklist" }).boundingBox();
+  expect(practice.x).toBeGreaterThanOrEqual(0);
+  expect(practice.x + practice.width).toBeLessThanOrEqual(320);
 });

@@ -1,0 +1,573 @@
+/* A dedicated navigation row keeps every tool reachable on small screens. */
+:root {
+  --nav-height: 124px;
+}
+.site-header:has(.competitive-header) {
+  height: 124px;
+}
+.competitive-header {
+  flex-wrap: wrap;
+  align-content: space-between;
+  gap: 0;
+  padding-top: 16px;
+}
+.competitive-header .brand {
+  order: 0;
+}
+.competitive-header .header-right {
+  display: none;
+}
+.competitive-header .settings-trigger {
+  order: 1;
+  margin-left: auto;
+}
+.competitive-header .tool-tabs {
+  position: relative;
+  order: 3;
+  width: 100%;
+  max-width: 100%;
+  height: 49px;
+  gap: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.header-inner nav .tool-tab {
+  flex: 0 0 auto;
+  padding: 0 13px;
+  font-size: 11px;
+  gap: 7px;
+  outline-offset: -4px;
+}
+.home-preview-symbol {
+  position: absolute;
+  right: 20px;
+  top: 16px;
+  color: var(--blue);
+  opacity: 0.35;
+  transform: rotate(-10deg);
+}
+.comp-page {
+  padding-top: 30px;
+  padding-bottom: 45px;
+}
+.back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-bottom: 25px;
+}
+.back-home:hover {
+  color: var(--blue);
+}
+.comp-intro h1 {
+  font-size: 35px;
+}
+.comp-columns {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.comp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+.comp-card {
+  padding: 25px;
+  min-width: 0;
+}
+.comp-card h2 {
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  margin-bottom: 18px;
+}
+.comp-subheading {
+  font-size: 12px;
+  margin: 24px 0 10px;
+}
+.comp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 16px 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.comp-field > span {
+  font-weight: 600;
+}
+.comp-field input,
+.comp-field select,
+.comp-field textarea,
+.comp-table input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-subtle);
+  color: var(--ink);
+  padding: 11px 12px;
+  font: inherit;
+  font-size: 13px;
+}
+.comp-field input,
+.comp-field select {
+  min-height: 43px;
+}
+.comp-field textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+.comp-field input:focus,
+.comp-field select:focus,
+.comp-field textarea:focus {
+  outline: 2px solid var(--accent-line);
+  border-color: var(--blue);
+}
+.comp-field small {
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+.comp-field input[aria-invalid="true"],
+.comp-table input[aria-invalid="true"] {
+  border-color: var(--error-text);
+}
+.comp-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.comp-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.comp-card .button {
+  min-height: 40px;
+}
+.comp-card button:disabled,
+.planner-topbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.comp-hint {
+  font-size: 11px;
+  line-height: 1.85;
+  color: var(--text-muted);
+  margin: 12px 0;
+}
+.comp-hint a {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.comp-divider {
+  height: 1px;
+  background: var(--line);
+  margin-top: 23px;
+}
+.comp-error {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--error-text);
+  margin: 14px 0;
+}
+.comp-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.comp-metric {
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  min-width: 0;
+}
+.comp-metric > span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+.comp-metric strong {
+  display: block;
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 23px;
+  margin-top: 8px;
+  color: var(--blue);
+  overflow-wrap: anywhere;
+}
+.comp-spotlight {
+  background: linear-gradient(135deg, var(--accent-soft), var(--surface));
+  border: 1px solid var(--accent-line);
+  border-radius: 13px;
+  padding: 28px;
+}
+.comp-spotlight h2 {
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 27px;
+  margin: 16px 0 12px;
+  letter-spacing: -0.7px;
+}
+.comp-spotlight p,
+.comp-spotlight small {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.9;
+}
+.comp-progress {
+  height: 8px;
+  border-radius: 10px;
+  background: var(--line);
+  overflow: hidden;
+  margin: 20px 0 12px;
+}
+.comp-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: inherit;
+}
+.comp-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 17px;
+}
+.comp-section-heading h2 {
+  margin-bottom: 0;
+  overflow-wrap: anywhere;
+}
+.comp-empty {
+  padding: 28px 5px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.9;
+}
+.comp-table-scroll {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+}
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 11px;
+}
+.comp-table th {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.comp-table td {
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--line);
+  line-height: 1.8;
+  max-width: 200px;
+  overflow-wrap: anywhere;
+}
+.comp-table input {
+  min-width: 74px;
+  padding: 8px;
+}
+.comp-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--blue);
+  font-size: 11px;
+  padding: 12px 0;
+}
+.comp-storage {
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.9;
+  margin-top: 24px;
+}
+.comp-feedback {
+  color: var(--blue);
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 16px;
+}
+.comp-pill {
+  border: 1px solid var(--accent-line);
+  border-radius: 4px;
+  padding: 4px 7px;
+  font-size: 8px;
+  letter-spacing: 0.7px;
+  color: var(--blue);
+}
+.scoring-tier {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 9px;
+  align-items: center;
+}
+.scoring-tier .comp-field > span {
+  font-size: 10px;
+}
+.scoring-tier .icon-button {
+  margin-top: 22px;
+}
+.practice-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+.practice-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 17px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+.practice-task > label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  cursor: pointer;
+  min-width: 0;
+}
+.practice-task input {
+  accent-color: var(--primary);
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+.practice-task label > span {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.practice-task strong {
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+.practice-task small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.practice-task.task-done {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.task-done strong {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.planner-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 22px;
+  margin-bottom: 24px;
+}
+.planner-topbar > .comp-field {
+  flex: 1;
+  max-width: 400px;
+}
+.plan-map-card {
+  padding: 22px;
+}
+.plan-map-tools {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.plan-layer-button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  min-height: 36px;
+}
+.plan-layer-button > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.plan-layer-button.layer-active {
+  border-color: var(--blue);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+.plan-map {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 9px;
+  background: #0b4580;
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+.plan-cursor {
+  display: none;
+  pointer-events: none;
+}
+.plan-map:focus-visible .plan-cursor {
+  display: block;
+}
+.plan-map-marker {
+  pointer-events: none;
+}
+.plan-map-placeholder {
+  min-height: 300px;
+  border: 1px dashed var(--line);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.map-edit-actions {
+  margin-top: 16px;
+}
+.plan-delete {
+  align-self: flex-start;
+  color: var(--error-text);
+}
+:root[data-density="compact"] .comp-card {
+  padding: 20px;
+}
+:root[data-density="compact"] .comp-table td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+:root[data-glow="false"] .comp-spotlight {
+  background: var(--surface);
+}
+@media (min-width: 1100px) {
+  .home-page {
+    max-width: 1376px;
+  }
+  .home-tools {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .home-tool-content {
+    padding: 24px;
+  }
+  .home-tool h2 {
+    font-size: 22px;
+  }
+  .home-tool-icon {
+    left: 24px;
+  }
+  .home-preview-label {
+    left: 24px;
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .home-preview-rings {
+    right: -25px;
+  }
+}
+@media (max-width: 900px) {
+  .comp-columns {
+    grid-template-columns: 1fr;
+  }
+  .planner-topbar {
+    flex-wrap: wrap;
+    gap: 0;
+    padding-bottom: 22px;
+  }
+  .planner-topbar > .comp-field {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+@media (max-width: 800px) {
+  :root {
+    --nav-height: 110px;
+  }
+  .site-header:has(.competitive-header) {
+    height: 110px;
+  }
+  .competitive-header {
+    padding-top: 17px;
+  }
+  .competitive-header .tool-tabs {
+    height: 47px;
+  }
+  .header-inner nav .tool-tab {
+    padding: 0 12px;
+    font-size: 10px;
+  }
+}
+@media (max-width: 500px) {
+  .comp-page {
+    padding-top: 24px;
+  }
+  .comp-intro h1 {
+    font-size: 29px;
+  }
+  .comp-card {
+    padding: 19px;
+  }
+  .comp-metrics {
+    gap: 7px;
+  }
+  .comp-metric {
+    padding: 12px 9px;
+  }
+  .comp-metric > span {
+    font-size: 8px;
+  }
+  .comp-metric strong {
+    font-size: 20px;
+  }
+  .comp-spotlight {
+    padding: 22px;
+  }
+  .comp-spotlight h2 {
+    font-size: 24px;
+  }
+  .comp-field-row {
+    gap: 9px;
+  }
+  .comp-field input,
+  .comp-field select {
+    padding: 10px;
+  }
+  .plan-map-card {
+    padding: 15px;
+  }
+  .plan-layer-button {
+    font-size: 9px;
+    padding: 8px;
+  }
+}

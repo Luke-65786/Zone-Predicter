@@ -1,29 +1,36 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Calculator, Crosshair, House, Settings2, Zap } from "lucide-react";
+import { House, Settings2, Zap } from "lucide-react";
 import HomePage from "./HomePage.jsx";
 import PointsCalculator from "./PointsCalculator.jsx";
 import ZonePlanner from "./ZonePlanner.jsx";
 import SettingsPanel from "./SettingsPanel.jsx";
 import useAppearance from "./useAppearance.js";
+import { TOOLS } from "./tool-catalog.js";
+import TournamentTracker from "./TournamentTracker.jsx";
+import ScoringCalculator from "./ScoringCalculator.jsx";
+import TournamentPlanner from "./TournamentPlanner.jsx";
+import PracticeChecklist from "./PracticeChecklist.jsx";
+import useSavedState from "./useSavedState.js";
+import { normalizePlans } from "./competition.js";
 
 const tabs = [
   { id: "home", label: "Home", icon: House },
-  { id: "points", label: "Points calculator", icon: Calculator },
-  { id: "zones", label: "Zone predictor", icon: Crosshair },
+  ...TOOLS.map((tool) => ({ ...tool, label: tool.name })),
 ];
 const tabFromHash = () => {
   if (["#zones", "#planner"].includes(window.location.hash)) return "zones";
-  if (window.location.hash === "#points") return "points";
+  const id = window.location.hash.slice(1);
+  if (TOOLS.some((tool) => tool.id === id)) return id;
   return "home";
 };
 
 export default function App() {
   const [activeTab, setActiveTab] = useState(tabFromHash);
-  const [visitedPoints, setVisitedPoints] = useState(
-    () => tabFromHash() === "points",
-  );
-  const [visitedZones, setVisitedZones] = useState(
-    () => tabFromHash() === "zones",
+  const [visited, setVisited] = useState(() => new Set([tabFromHash()]));
+  const plansStore = useSavedState(
+    "compiq-plans-v1",
+    { plans: [], activeId: null },
+    normalizePlans,
   );
   const tabRefs = useRef({});
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -32,11 +39,20 @@ export default function App() {
   useEffect(() => {
     setSettingsOpen(false);
     window.scrollTo(0, 0);
+    const tab = tabRefs.current[activeTab];
+    const nav = tab?.parentElement;
+    if (tab && nav) {
+      if (tab.offsetLeft < nav.scrollLeft) nav.scrollLeft = tab.offsetLeft;
+      else if (
+        tab.offsetLeft + tab.offsetWidth >
+        nav.scrollLeft + nav.clientWidth
+      )
+        nav.scrollLeft = tab.offsetLeft + tab.offsetWidth - nav.clientWidth;
+    }
   }, [activeTab]);
 
   function selectTab(id) {
-    if (id === "points") setVisitedPoints(true);
-    if (id === "zones") setVisitedZones(true);
+    setVisited((previous) => new Set([...previous, id]));
     setActiveTab(id);
     if (window.location.hash !== `#${id}`)
       window.history.pushState(null, "", `#${id}`);
@@ -44,8 +60,7 @@ export default function App() {
   useEffect(() => {
     function syncTab() {
       const id = tabFromHash();
-      if (id === "points") setVisitedPoints(true);
-      if (id === "zones") setVisitedZones(true);
+      setVisited((previous) => new Set([...previous, id]));
       setActiveTab(id);
     }
     window.addEventListener("hashchange", syncTab);
@@ -56,9 +71,10 @@ export default function App() {
     };
   }, []);
   useEffect(() => {
-    document.title = activeTab === "home"
-      ? "CompIQ · Fortnite Competitive Toolkit"
-      : `${activeTab === "points" ? "Points Calculator" : "Zone Predictor"} · CompIQ`;
+    document.title =
+      activeTab === "home"
+        ? "CompIQ · Fortnite Competitive Toolkit"
+        : `${TOOLS.find((tool) => tool.id === activeTab)?.name.replace(/\b\w/g, (letter) => letter.toUpperCase())} · CompIQ`;
   }, [activeTab]);
 
   function onTabKey(event, index) {
@@ -142,7 +158,7 @@ export default function App() {
           aria-labelledby="tab-points"
           hidden={activeTab !== "points"}
         >
-          {visitedPoints && <PointsCalculator />}
+          {visited.has("points") && <PointsCalculator />}
         </section>
         <section
           id="panel-zones"
@@ -150,8 +166,26 @@ export default function App() {
           aria-labelledby="tab-zones"
           hidden={activeTab !== "zones"}
         >
-          {visitedZones && <ZonePlanner active={activeTab === "zones"} />}
+          {visited.has("zones") && (
+            <ZonePlanner active={activeTab === "zones"} />
+          )}
         </section>
+        {[
+          ["tracker", <TournamentTracker plans={plansStore.value.plans} />],
+          ["scoring", <ScoringCalculator />],
+          ["plans", <TournamentPlanner store={plansStore} />],
+          ["practice", <PracticeChecklist />],
+        ].map(([id, content]) => (
+          <section
+            key={id}
+            id={`panel-${id}`}
+            role="tabpanel"
+            aria-labelledby={`tab-${id}`}
+            hidden={activeTab !== id}
+          >
+            {visited.has(id) && content}
+          </section>
+        ))}
       </main>
       <footer>
         <div className="footer-inner">

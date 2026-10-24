@@ -6,6 +6,7 @@ import "@fontsource-variable/manrope";
 import "./styles.css";
 import "./appearance.css";
 import "./home.css";
+import "./competition.css";
 import { applyAppearance, readAppearance } from "./appearance.js";
 
 applyAppearance(

@@ -184,8 +184,9 @@ test("tabs support arrow-key navigation and legacy zone links", async ({
   ).toBeFocused();
   await expect(page.getByRole("tabpanel", { name: "Home", exact: true })).toBeVisible();
   await page.keyboard.press("End");
-  await expect(page.getByRole("tab", { name: "Zone predictor" })).toBeFocused();
-  await page.keyboard.press("ArrowLeft");
+  await expect(page.getByRole("tab", { name: "Practice checklist" })).toBeFocused();
+  await page.keyboard.press("Home");
+  await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("tab", { name: "Points calculator" })).toBeFocused();
   await expect(page.getByTestId("points-average")).toBeVisible();
   await page.goto("/#planner");
