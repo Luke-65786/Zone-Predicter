@@ -173,14 +173,74 @@ test("scoring calculator applies custom rules and rejects inconsistent placement
     page
       .getByRole("table", { name: "Placement and elimination combinations" })
       .locator("tbody tr"),
-  ).toHaveCount(3);
+  ).toHaveCount(6);
+  await expect(
+    page
+      .getByRole("table", { name: "Placement and elimination combinations" })
+      .locator("tbody tr td:first-child"),
+  ).toHaveText(["1st", "3rd", "5th", "10th", "15th", "25th"]);
   await page.reload();
   await expect(page.getByTestId("match-score")).toHaveText("26");
   await page.getByLabel("Points per elimination", { exact: true }).fill("0");
-  await expect(page.getByText("Not reachable", { exact: true })).toHaveCount(3);
+  await expect(page.getByText("Not reachable", { exact: true })).toHaveCount(6);
   await page.getByLabel("Tier 2 top finish", { exact: true }).fill("1");
   await expect(page.getByRole("alert")).toContainText("only once");
   await expect(page.getByTestId("match-score")).toHaveCount(0);
+});
+
+test("all placement rules clear together, can be undone, and stay cleared after reload", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.addInitScript(() => {
+    if (localStorage.getItem("compiq-scoring-v1") === null)
+      localStorage.setItem(
+        "compiq-scoring-v1",
+        JSON.stringify({
+          elimination: "2",
+          target: "65",
+          finish: "3",
+          eliminations: "4",
+          tiers: Array.from({ length: 50 }, (_, i) => ({
+            id: `row-${i}`,
+            rank: String(i + 1),
+            points: String(i < 3 ? [60, 53, 49][i] : 50 - i),
+          })),
+        }),
+      );
+  });
+  await page.goto("/#scoring");
+  const rules = page.getByRole("group", { name: "Placement scoring rules" });
+  await expect(rules.getByRole("spinbutton")).toHaveCount(100);
+  await expect(page.getByTestId("match-score")).toHaveText("57");
+  const clear = page.getByRole("button", {
+    name: "Clear all placements",
+    exact: true,
+  });
+  await clear.click();
+  await expect(rules.getByRole("spinbutton")).toHaveCount(0);
+  await expect(clear).toBeDisabled();
+  await expect(
+    page.getByLabel("Points per elimination", { exact: true }),
+  ).toHaveValue("2");
+  await expect(
+    page.getByLabel("Points needed this game", { exact: true }),
+  ).toHaveValue("65");
+  await expect(page.getByTestId("match-score")).toHaveText("8");
+  await page
+    .getByRole("button", { name: "Undo clear placements", exact: true })
+    .click();
+  await expect(rules.getByRole("spinbutton")).toHaveCount(100);
+  await expect(page.getByTestId("match-score")).toHaveText("57");
+  await clear.click();
+  await page.reload();
+  await expect(rules.getByRole("spinbutton")).toHaveCount(0);
+  await expect(page.getByTestId("match-score")).toHaveText("8");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });
 
 test("practice saves per-date checks, custom drills, notes, and reversible resets", async ({

@@ -76,11 +76,36 @@ test("custom placement rules apply total tier scores and calculate minimum elimi
   assert.equal(matchScore(rules, "11", "1").total, 2);
   assert.deepEqual(
     scoreCombinations(rules, "25").map((row) => row.eliminations),
-    [3, 10, 13],
+    [3, 10, 10, 10, 13, 13],
+  );
+  assert.deepEqual(
+    scoreCombinations(rules, "25").map((row) => row.rank),
+    [1, 3, 5, 10, 15, 25],
+  );
+  const fullTable = scoringRules({
+    elimination: "2",
+    tiers: Array.from({ length: 50 }, (_, index) => ({
+      rank: String(index + 1),
+      points: String(index < 3 ? [60, 53, 49][index] : 50 - index),
+    })),
+  });
+  assert.deepEqual(
+    scoreCombinations(fullTable, "65").map((row) => [
+      row.points,
+      row.eliminations,
+    ]),
+    [
+      [60, 3],
+      [49, 8],
+      [46, 10],
+      [41, 12],
+      [36, 15],
+      [26, 20],
+    ],
   );
   assert.deepEqual(
     scoreCombinations(rules, "0").map((row) => row.eliminations),
-    [0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
   );
   assert.equal(matchScore(rules, "101", "2"), null);
 });
@@ -92,7 +117,7 @@ test("zero elimination scoring and invalid placement rules never divide by zero 
   });
   assert.deepEqual(
     scoreCombinations(zero, "20").map((row) => row.eliminations),
-    [0, null],
+    [0, null, null, null, null, null],
   );
   assert.ok(
     scoringRules({

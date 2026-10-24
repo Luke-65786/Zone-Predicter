@@ -190,24 +190,24 @@ export function matchScore(rules, finish, eliminations) {
     total: placement + Number(eliminations) * rules.elimination,
   };
 }
+export const TARGET_FINISHES = Object.freeze([1, 3, 5, 10, 15, 25]);
+
 export function scoreCombinations(rules, target) {
   const goal = integer(target);
   if (rules.error || goal === null) return [];
-  const bands = rules.tiers.map((t, i) => ({
-    ...t,
-    from: i ? rules.tiers[i - 1].rank + 1 : 1,
-  }));
-  const last = rules.tiers.at(-1)?.rank ?? 0;
-  if (last < 100) bands.push({ from: last + 1, rank: 100, points: 0 });
-  return bands.map((t) => ({
-    ...t,
-    eliminations:
-      goal <= t.points
-        ? 0
-        : rules.elimination
-          ? Math.ceil((goal - t.points) / rules.elimination)
-          : null,
-  }));
+  return TARGET_FINISHES.map((rank) => {
+    const points = rules.tiers.find((tier) => rank <= tier.rank)?.points ?? 0;
+    return {
+      rank,
+      points,
+      eliminations:
+        goal <= points
+          ? 0
+          : rules.elimination
+            ? Math.ceil((goal - points) / rules.elimination)
+            : null,
+    };
+  });
 }
 
 export const DEFAULT_TASKS = [

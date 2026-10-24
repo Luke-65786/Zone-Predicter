@@ -22,8 +22,11 @@ export default function ScoringCalculator() {
   } = useSavedState("compiq-scoring-v1", blankScoring, normalizeScoring);
   const [touched, setTouched] = useState(false);
   const [beforeImport, setBeforeImport] = useState(null);
-  const patch = (values) =>
+  const [clearedTiers, setClearedTiers] = useState(null);
+  const patch = (values) => {
+    if (Object.hasOwn(values, "tiers")) setClearedTiers(null);
     setValue((previous) => ({ ...previous, ...values }));
+  };
   const field = (key) => ({
     value: form[key],
     onChange: (e) => {
@@ -129,17 +132,38 @@ export default function ScoringCalculator() {
               </div>
             ))}
           </div>
-          <button
-            className="button button-white"
-            disabled={form.tiers.length >= 100}
-            onClick={() =>
-              patch({
-                tiers: [...form.tiers, { id: uid(), rank: "", points: "" }],
-              })
-            }
-          >
-            <Plus size={14} /> Add placement tier
-          </button>
+          <div className="comp-actions">
+            <button
+              className="button button-white"
+              disabled={form.tiers.length >= 100}
+              onClick={() =>
+                patch({
+                  tiers: [...form.tiers, { id: uid(), rank: "", points: "" }],
+                })
+              }
+            >
+              <Plus size={14} /> Add placement tier
+            </button>
+            <button
+              className="button button-white"
+              disabled={!form.tiers.length}
+              onClick={() => {
+                patch({ tiers: [] });
+                setClearedTiers(form.tiers);
+                setBeforeImport(null);
+              }}
+            >
+              <Trash2 size={14} /> Clear all placements
+            </button>
+          </div>
+          {clearedTiers && (
+            <button
+              className="comp-undo"
+              onClick={() => patch({ tiers: clearedTiers })}
+            >
+              <RotateCcw size={14} /> Undo clear placements
+            </button>
+          )}
           {touched && rules.error && (
             <p className="comp-error" role="alert">
               {rules.error}
@@ -220,9 +244,8 @@ export default function ScoringCalculator() {
                     {combinations.map((row) => (
                       <tr key={row.rank}>
                         <td>
-                          {row.from === row.rank
-                            ? `#${row.rank}`
-                            : `#${row.from}–${row.rank}`}
+                          {row.rank}
+                          {row.rank === 1 ? "st" : row.rank === 3 ? "rd" : "th"}
                         </td>
                         <td>{format(row.points)}</td>
                         <td>
