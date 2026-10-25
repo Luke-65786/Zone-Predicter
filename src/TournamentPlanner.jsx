@@ -304,6 +304,11 @@ export default function TournamentPlanner({ store }) {
             <h2>Your drop and rotation map</h2>
             <MapPin size={18} />
           </div>
+          <p className="comp-hint">
+            For a bus route and jump approach, open the{" "}
+            <a href="#drops">drop map</a>. You can load this plan’s saved
+            landing spot there.
+          </p>
           <div
             className="plan-map-tools"
             role="group"

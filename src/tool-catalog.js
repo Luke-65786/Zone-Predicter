@@ -4,6 +4,7 @@ import {
   CheckSquare,
   Crosshair,
   Route,
+  Send,
   Trophy,
 } from "lucide-react";
 
@@ -32,6 +33,19 @@ export const TOOLS = [
       "Interactive Fortnite map",
       "Zone and rotation estimates",
       "POI-based deadside overlay",
+    ],
+  },
+  {
+    id: "drops",
+    name: "Drop map",
+    icon: Send,
+    label: "OWN YOUR LANDING",
+    description:
+      "Plot your bus route and landing spot to explore a jump point, glider deployment, and approach timing.",
+    features: [
+      "Bus, jump, and glide map",
+      "Zoom in on your landing",
+      "Save drops and export your map",
     ],
   },
   {

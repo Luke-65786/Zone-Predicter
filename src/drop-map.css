@@ -1,0 +1,324 @@
+.drop-columns {
+  grid-template-columns: minmax(270px, 330px) minmax(0, 1fr);
+}
+.drop-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.drop-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  color: var(--ink);
+}
+.drop-step-active {
+  border-color: var(--blue);
+  background: var(--accent-soft);
+}
+.drop-step-number {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+}
+.drop-step > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.drop-step strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.drop-step small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.drop-step > svg {
+  color: var(--blue);
+  flex-shrink: 0;
+}
+.drop-edit-actions {
+  margin-top: 16px;
+}
+.drop-edit-actions .button {
+  font-size: 10px;
+  padding: 9px 11px;
+}
+.drop-import-plan {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.drop-model-settings summary {
+  cursor: pointer;
+  font-family: "Manrope Variable", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+.drop-model-settings[open] summary {
+  margin-bottom: 15px;
+}
+.drop-map-card {
+  padding: 22px;
+}
+.drop-view-controls {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+.drop-view-controls .button {
+  min-height: 36px;
+  font-size: 11px;
+  padding: 8px 13px;
+}
+.drop-view-controls .button[aria-pressed="true"] {
+  border-color: var(--blue);
+  background: var(--accent-soft);
+  color: var(--blue);
+}
+.drop-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.drop-zoom-controls > span {
+  min-width: 35px;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.drop-view-controls .icon-button {
+  width: 34px;
+  height: 36px;
+  flex-shrink: 0;
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+}
+.drop-map {
+  overflow: hidden;
+}
+.drop-map-pan {
+  cursor: grab;
+  touch-action: none;
+}
+.drop-map-pan:active {
+  cursor: grabbing;
+}
+.drop-marker {
+  pointer-events: none;
+  font-family: "DM Sans Variable", sans-serif;
+}
+.drop-map-legend {
+  display: flex;
+  gap: 10px 22px;
+  flex-wrap: wrap;
+  margin: 17px 0;
+}
+.drop-map-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.drop-map-legend i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  outline: 1px solid #071326;
+}
+.drop-results {
+  border-color: var(--accent-line);
+}
+.drop-timeline {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+}
+.drop-timeline li {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  position: relative;
+  padding: 13px 0;
+}
+.drop-timeline li + li {
+  border-top: 1px solid var(--line);
+}
+.drop-timeline-marker {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  color: #071326;
+}
+.drop-timeline-0 {
+  background: #7dd3fc;
+}
+.drop-timeline-1 {
+  background: #ffe37d;
+}
+.drop-timeline-2 {
+  background: #d7a6ff;
+}
+.drop-timeline-3 {
+  background: #7aefb3;
+}
+.drop-timeline li > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.drop-timeline strong {
+  display: block;
+  font-size: 12px;
+  line-height: 1.8;
+  font-weight: 500;
+}
+.drop-timeline small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.8;
+  margin-top: 2px;
+}
+.drop-timeline b {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.drop-estimate-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 10px;
+  line-height: 1.9;
+  color: var(--text-muted);
+  background: var(--surface-subtle);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 20px;
+}
+.drop-estimate-note svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--blue);
+}
+.drop-topbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+:root[data-text-size="large"] .drop-step strong,
+:root[data-text-size="large"] .drop-timeline strong {
+  font-size: 14px;
+}
+:root[data-text-size="large"] .drop-step small,
+:root[data-text-size="large"] .drop-estimate-note,
+:root[data-text-size="large"] .drop-map-legend > span,
+:root[data-text-size="large"] .drop-timeline small {
+  font-size: 12px;
+}
+@media (max-width: 850px) {
+  .drop-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .drop-columns > .comp-stack:first-child {
+    display: contents;
+  }
+  .drop-columns > .comp-stack:first-child > :first-child {
+    grid-row: 1;
+  }
+  .drop-columns > .comp-stack:nth-child(2) {
+    grid-row: 2;
+  }
+  .drop-columns > .comp-stack:first-child > :nth-child(2) {
+    grid-row: 3;
+  }
+  .drop-columns > .comp-stack:first-child > :nth-child(3) {
+    grid-row: 4;
+  }
+}
+@media (max-width: 520px) {
+  .drop-view-controls {
+    gap: 5px;
+  }
+  .drop-view-controls .button {
+    padding: 7px;
+    gap: 5px;
+    font-size: 10px;
+    min-height: 32px;
+  }
+  .drop-view-controls .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+  .drop-zoom-controls {
+    gap: 0;
+  }
+  .drop-zoom-controls > span {
+    min-width: 30px;
+  }
+  .drop-map-card {
+    padding: 15px;
+  }
+  .drop-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .drop-metrics .comp-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    padding: 13px;
+  }
+  .drop-metrics .comp-metric strong {
+    margin: 0;
+    font-size: 21px;
+  }
+  .drop-metrics .comp-metric > span {
+    max-width: 50%;
+  }
+  .drop-timeline li {
+    gap: 9px;
+    flex-wrap: wrap;
+  }
+  .drop-timeline li > span:nth-child(2) {
+    flex-basis: calc(100% - 45px);
+  }
+  .drop-timeline b {
+    margin-left: 38px;
+  }
+  .drop-map-card .comp-section-heading {
+    gap: 10px;
+  }
+  .drop-map-legend {
+    gap: 12px;
+  }
+}

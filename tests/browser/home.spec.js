@@ -10,7 +10,7 @@ test("home offers every tool without loading a map or changing saved inputs", as
   await expect(page.getByRole("tab", { name: "Home", exact: true })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("link", { name: "Open points calculator" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open zone predictor" })).toBeVisible();
-  for (const name of ["tournament tracker", "scoring calculator", "tournament planner", "practice checklist"]) {
+  for (const name of ["drop map", "tournament tracker", "scoring calculator", "tournament planner", "practice checklist"]) {
     await expect(page.getByRole("link", { name: `Open ${name}` })).toBeVisible();
   }
   await expect(page.getByLabel("Target points", { exact: true })).toHaveCount(0);

@@ -1,6 +1,6 @@
 # CompIQ
 
-A Fortnite competitive toolkit built with React and Vite, with a home page for choosing six tools: points calculator, zone predictor, tournament tracker, scoring calculator, tournament planner, and practice checklist.
+A Fortnite competitive toolkit built with React and Vite, with a home page for choosing seven tools: points calculator, zone predictor, drop map, tournament tracker, scoring calculator, tournament planner, and practice checklist.
 
 ## GitHub Pages deployment
 
@@ -21,7 +21,21 @@ Vite listens on port 5173. Use `npm run build` for the production bundle, `npm r
 
 ## Home page
 
-The default page and `#home` open a chooser for all six tools. The Home tab and CompIQ logos return here from any tool. Tools mount only when first opened, so the chooser makes no map request or changes to saved calculator inputs. Returning home preserves tool state, and its appearance shortcut opens the shared Settings menu. The navigation row scrolls horizontally on smaller screens and brings the active tab into view.
+The default page and `#home` open a chooser for all seven tools. The Home tab and CompIQ logos return here from any tool. Tools mount only when first opened, so the chooser makes no map request or changes to saved calculator inputs. Returning home preserves tool state, and its appearance shortcut opens the shared Settings menu. The navigation row scrolls horizontally on smaller screens and brings the active tab into view.
+
+## Drop map (`#drops`)
+
+Mark **Bus start**, **Bus end**, then **Landing spot** on the same user-selected Fortnite image. Placement advances through these three steps automatically. The bus travels from marker 1 to marker 2. A flat-ground model suggests a yellow jump point, purple glider deployment point, dive/glide approach, and a timeline measured from arrival at the bus-start marker. Reverse the route, clear it while keeping the landing, or undo the last map edit. Re-place any marker to change it. An out-of-range landing or invalid model removes the suggested approach rather than showing a stale result.
+
+Zoom from 1× to 4×, center on the landing, or use **Pan** to drag the view. The map supports arrow-key cursor movement, Shift for larger steps, Enter/Space to place, and +/− to zoom. In Pan mode the arrows move the view. The map and controls work on touch screens. **Download map (SVG)** embeds the map image, routes, markers, estimate label, and current zoom into a standalone image; failed image downloads show a retryable message without losing the drop.
+
+The current draft, notes, and up to 30 named drops persist under `compiq-dropmap-v1`. Named drops autosave edits; switching profiles keeps their routes and assumptions independent. Removing a saved drop leaves its map available as a draft so it can be saved again. A saved tournament plan's landing can be loaded without changing that plan. Appearance Settings also offers Drop map as a start page. Browser-storage failures are reported accurately and do not block session use.
+
+**Timing model:** distances use an editable image-width scale (starting assumption 8,000 m). Other starting assumptions are bus speed 100 m/s, bus height 1,000 m above the landing, deployment height 100 m, dive speed 65 m/s along its path, glider horizontal speed 20 m/s, glider descent 5 m/s, and maximum dive angle 55° from vertical. These are illustrative inputs, not measured current-season Fortnite values. All are editable under **Timing model**, with finite bounds and deployment below the bus enforced.
+
+For horizontal jump-to-target distance `d`, vertical dive height `h`, and glide time `g = deployHeight / glideDescent`, glider range is `r = g × glideSpeed`. The model dives horizontally `max(0, d − r)` before gliding the rest. Dive duration is `hypot(h, max(0, d − r)) / diveSpeed`. Reach is limited to `h × tan(maxDiveAngle) + r`. The optimizer minimizes bus travel time plus dive time plus glide time over the reachable part of the bus segment, including both endpoints. It assumes a straight approach, constant speeds, and the ability to reduce horizontal glider travel for nearby targets. Tests compare the solution with independent dense sampling and check its descent limits.
+
+The image has no terrain elevation data. The tool does not calculate a terrain-aware automatic glider trigger, model buildings or steering acceleration, or guarantee the fastest in-game drop. Real terrain, flight mechanics, and patches affect results. DroppingCalc was referenced by the user, but its site was blocked in this workspace; this is an independent implementation using the repository's chosen image and an explicit approximate model.
 
 ## Tournament tracker (`#tracker`)
 
@@ -76,7 +90,7 @@ Open **Settings** in the header on desktop or mobile, or **Customize appearance*
 - **Card corners:** Soft, Rounded, or Sharp.
 - **Text size:** Standard or Larger for instructions, labels, tables, navigation, and tool form controls.
 - **Workspace width:** Standard (1,376 px), Wide (1,600 px), or Focused (1,160 px), within the available screen width.
-- **Home page layout:** the card Grid or a simpler List; all six tools remain reachable in either layout.
+- **Home page layout:** the card Grid or a simpler List; all seven tools remain reachable in either layout.
 - **Start page:** Home or a preferred tool, used on the next visit without a URL fragment. Explicit links such as `#home` and `#scoring` keep their usual destinations.
 - **Spacing:** Comfortable or Compact, which reduces vertical spacing without shrinking text.
 - **Sticky navigation:** keeps the tool tabs visible while scrolling; sticky side controls account for the header height.

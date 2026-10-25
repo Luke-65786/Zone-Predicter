@@ -7,6 +7,7 @@ import "./styles.css";
 import "./appearance.css";
 import "./home.css";
 import "./competition.css";
+import "./drop-map.css";
 import "./customization.css";
 import { applyAppearance, readAppearance } from "./appearance.js";
 

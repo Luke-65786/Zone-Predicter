@@ -10,6 +10,7 @@ import TournamentTracker from "./TournamentTracker.jsx";
 import ScoringCalculator from "./ScoringCalculator.jsx";
 import TournamentPlanner from "./TournamentPlanner.jsx";
 import PracticeChecklist from "./PracticeChecklist.jsx";
+import DropPlanner from "./DropPlanner.jsx";
 import useSavedState from "./useSavedState.js";
 import { normalizePlans } from "./competition.js";
 
@@ -176,6 +177,7 @@ export default function App() {
           )}
         </section>
         {[
+          ["drops", <DropPlanner plans={plansStore.value.plans} />],
           ["tracker", <TournamentTracker plans={plansStore.value.plans} />],
           ["scoring", <ScoringCalculator />],
           ["plans", <TournamentPlanner store={plansStore} />],

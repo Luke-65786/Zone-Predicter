@@ -445,7 +445,7 @@ test("mobile larger text, list view, and extended settings fit and keep every to
       .locator("body")
       .evaluate((node) => getComputedStyle(node).backgroundImage),
   ).toBe("none");
-  await expect(page.locator(".home-tool")).toHaveCount(6);
+  await expect(page.locator(".home-tool")).toHaveCount(7);
   await page
     .getByRole("link", { name: "Open scoring calculator", exact: true })
     .click();

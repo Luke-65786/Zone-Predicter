@@ -85,6 +85,7 @@ export function normalizeAppearance(value) {
       "home",
       "points",
       "zones",
+      "drops",
       "tracker",
       "scoring",
       "plans",
