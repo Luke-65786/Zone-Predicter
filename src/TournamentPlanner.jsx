@@ -10,8 +10,10 @@ import {
   Trash2,
 } from "lucide-react";
 import useCurrentMap from "./useCurrentMap.js";
-import { blankPlan, integer, uid } from "./competition.js";
-import { MAP_SOURCE_URL } from "./map-source.js";
+import { blankPlan, integer, uid, PLAN_MAP_KEYS } from "./competition.js";
+import { getMap } from "./map-source.js";
+import MapSelector from "./MapSelector.jsx";
+import { switchIsland } from "./map-layouts.js";
 import { Field, NumberField, StorageNote, ToolPage } from "./ToolUI.jsx";
 
 const layers = [
@@ -33,9 +35,9 @@ export default function TournamentPlanner({ store }) {
   const [undoMap, setUndoMap] = useState(null);
   const [deleted, setDeleted] = useState(null);
   const mapRef = useRef(null);
-  const map = useCurrentMap();
   const selected = value.plans.find((p) => p.id === value.activeId);
   const plan = selected ?? draft;
+  const map = useCurrentMap(plan.mapId);
   const validTarget = plan.target === "" || integer(plan.target) !== null;
   const validGames = plan.games === "" || integer(plan.games, 1, 200) !== null;
   function patch(values) {
@@ -108,7 +110,12 @@ export default function TournamentPlanner({ store }) {
     const blob = new Blob(
       [
         JSON.stringify(
-          { version: 1, mapSource: MAP_SOURCE_URL, plan },
+          {
+            version: 1,
+            mapSource: getMap(plan.mapId).source ?? getMap(plan.mapId).path,
+            mapId: plan.mapId,
+            plan,
+          },
           null,
           2,
         ),
@@ -304,6 +311,14 @@ export default function TournamentPlanner({ store }) {
             <h2>Your drop and rotation map</h2>
             <MapPin size={18} />
           </div>
+          <MapSelector
+            value={plan.mapId}
+            onChange={(mapId) => {
+              patch(switchIsland(plan, mapId, blankPlan(), PLAN_MAP_KEYS));
+              setUndoMap(null);
+              setCursor({ x: 500, y: 500 });
+            }}
+          />
           <p className="comp-hint">
             For a bus route and jump approach, open the{" "}
             <a href="#drops">drop map</a>. You can load this plan’s saved
@@ -391,6 +406,7 @@ export default function TournamentPlanner({ store }) {
                 }
               }}
             >
+              <rect width="1000" height="1000" fill="#2f3237" />
               <image href={map.url} x="0" y="0" width="1000" height="1000" />
               {["loot", "rotation"].map((layer) => (
                 <g key={layer}>

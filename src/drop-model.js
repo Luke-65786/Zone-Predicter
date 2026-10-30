@@ -1,3 +1,6 @@
+import { DEFAULT_MAP_ID, normalizeMapId } from "./map-source.js";
+import { normalizeLayouts } from "./map-layouts.js";
+export const DROP_MAP_KEYS = ["start", "end", "target", "physics"];
 export const DROP_PHYSICS_FIELDS = [
   {
     key: "mapWidth",
@@ -76,6 +79,8 @@ export const dropPoint = (p) =>
 
 export function blankDrop() {
   return {
+    mapId: DEFAULT_MAP_ID,
+    mapLayouts: {},
     name: "",
     start: null,
     end: null,
@@ -84,9 +89,17 @@ export function blankDrop() {
     physics: { ...DEFAULT_DROP_PHYSICS },
   };
 }
-export function normalizeDrop(value) {
+export function normalizeDrop(value, includeLayouts = true) {
   const raw = value && typeof value === "object" ? value : {};
   return {
+    mapId: normalizeMapId(raw.mapId),
+    mapLayouts: includeLayouts
+      ? normalizeLayouts(
+          raw.mapLayouts,
+          (layout) => normalizeDrop(layout, false),
+          DROP_MAP_KEYS,
+        )
+      : {},
     name: text(raw.name),
     start: dropPoint(raw.start),
     end: dropPoint(raw.end),

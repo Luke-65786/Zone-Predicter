@@ -25,6 +25,12 @@ The default page and `#home` open a chooser for all seven tools. The Home tab an
 
 ## Drop map (`#drops`)
 
+### Island choices
+
+The **Island map** selector in the Zone predictor, Drop map, and Tournament planner offers the original Battle Royale map and **Nightmare Island · Reload**. Nightmare Island uses the exact PNG supplied by the user, bundled at `public/maps/nightmare-island-reload.png`; it needs no external map request. Its original aspect ratio is retained, and its ten manually annotated POI label anchors account for the small horizontal margin when fitted to the square canvas.
+
+Island choices and layouts persist with saved drops and tournament plans. Switching islands keeps separate route/marker layouts (and separate drop timing inputs) so coordinates from one island are not applied to the other. Legacy saves belong to the original map. The zone planner keeps separate zone setups per island and clears its forecast when changing islands. Tournament-plan landing imports show only plans on the currently selected island. The same user-defined zone geometry and approximate drop timing model apply; the screenshot supplies no terrain heights or measured image scale. Check **Timing model → Image width** for your island when using distance/time estimates.
+
 Mark **Bus start**, **Bus end**, then **Landing spot** on the same user-selected Fortnite image. Placement advances through these three steps automatically. The bus travels from marker 1 to marker 2. A flat-ground model suggests a yellow jump point, purple glider deployment point, dive/glide approach, and a timeline measured from arrival at the bus-start marker. Reverse the route, clear it while keeping the landing, or undo the last map edit. Re-place any marker to change it. An out-of-range landing or invalid model removes the suggested approach rather than showing a stale result.
 
 Zoom from 1× to 4×, center on the landing, or use **Pan** to drag the view. The map supports arrow-key cursor movement, Shift for larger steps, Enter/Space to place, and +/− to zoom. In Pan mode the arrows move the view. The map and controls work on touch screens. **Download map (SVG)** embeds the map image, routes, markers, estimate label, and current zoom into a standalone image; failed image downloads show a retryable message without losing the drop.

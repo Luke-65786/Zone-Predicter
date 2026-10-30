@@ -267,6 +267,7 @@ export default function DropMapCanvas({
             />
           </marker>
         </defs>
+        <rect width="1000" height="1000" fill="#2f3237" />
         <image href={mapUrl} x="0" y="0" width="1000" height="1000" />
         {drop.start && drop.end && (
           <g>

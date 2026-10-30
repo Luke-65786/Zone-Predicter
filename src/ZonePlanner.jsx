@@ -27,8 +27,10 @@ import {
 } from "lucide-react";
 import ZoneSides from "./ZoneSides.jsx";
 import useCurrentMap from "./useCurrentMap.js";
-import { MAP_SOURCE_URL } from "./map-source.js";
-import { MAP_POIS } from "./map-pois.js";
+import { DEFAULT_MAP_ID, normalizeMapId, getMap } from "./map-source.js";
+import { MAP_POIS, NIGHTMARE_POIS } from "./map-pois.js";
+import MapSelector from "./MapSelector.jsx";
+import useSavedState from "./useSavedState.js";
 import {
   DEFAULT_SETUP,
   MAP_SIZE,
@@ -43,10 +45,10 @@ import {
 } from "./geometry.js";
 
 const STORAGE_KEY = "zoneiq-setup-v2";
-function initialSetup() {
+function initialSetup(storageKey = STORAGE_KEY) {
   try {
     return (
-      restoreSetup(localStorage.getItem(STORAGE_KEY)) ||
+      restoreSetup(localStorage.getItem(storageKey)) ||
       structuredClone(DEFAULT_SETUP)
     );
   } catch {
@@ -55,17 +57,38 @@ function initialSetup() {
 }
 
 function ZonePlanner({ active = true }) {
-  const [setup, setSetup] = useState(initialSetup);
+  const selected = useSavedState(
+    "compiq-zone-map-v1",
+    DEFAULT_MAP_ID,
+    normalizeMapId,
+  );
+  return (
+    <ZonePlannerMap
+      key={selected.value}
+      active={active}
+      mapId={selected.value}
+      onMapChange={selected.setValue}
+    />
+  );
+}
+function ZonePlannerMap({ active, mapId, onMapChange }) {
+  const storageKey =
+    mapId === DEFAULT_MAP_ID ? STORAGE_KEY : `${STORAGE_KEY}-${mapId}`;
+  const pois = mapId === "nightmare-reload" ? NIGHTMARE_POIS : MAP_POIS;
+  const selectedMap = getMap(mapId);
+  const [setup, setSetup] = useState(() => initialSetup(storageKey));
   const [forecast, setForecast] = useState(null);
   const [tool, setTool] = useState("circle");
   const [showHeat, setShowHeat] = useState(true);
   const [showRoute, setShowRoute] = useState(true);
   const [showSides, setShowSides] = useState(false);
-  const map = useCurrentMap();
+  const map = useCurrentMap(mapId);
   const mapImage = map.url;
   const mapName =
     map.status === "ready"
-      ? "Your Fortnite map"
+      ? mapId === DEFAULT_MAP_ID
+        ? "Your Fortnite map"
+        : selectedMap.name
       : map.status === "loading"
         ? "Loading your map…"
         : "Map unavailable";
@@ -79,7 +102,7 @@ function ZonePlanner({ active = true }) {
   const dragging = useRef(false);
   const scenario = forecast?.path[3];
   const rotation = scenario ? planRotation(setup.player, scenario) : null;
-  const zoneSides = forecast ? estimateZoneSides(scenario, MAP_POIS) : null;
+  const zoneSides = forecast ? estimateZoneSides(scenario, pois) : null;
 
   useEffect(() => {
     if (!active) {
@@ -90,12 +113,12 @@ function ZonePlanner({ active = true }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(setup));
+      localStorage.setItem(storageKey, JSON.stringify(setup));
       setStorageWarning(false);
     } catch {
       setStorageWarning(true);
     }
-  }, [setup]);
+  }, [setup, storageKey]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 3200);
@@ -302,6 +325,7 @@ function ZonePlanner({ active = true }) {
                 <span className="step-label">01 — 03</span>
               </div>
               <div className="control-section">
+                <MapSelector value={mapId} onChange={onMapChange} />
                 <div className="field-heading">
                   <span>Your map</span>
                   <span className="tiny-tag">AUTO-LOADED</span>
@@ -331,7 +355,14 @@ function ZonePlanner({ active = true }) {
                 </div>
                 <p className="field-note">
                   <span>Your selected map. </span>
-                  <a href={MAP_SOURCE_URL} target="_blank" rel="noreferrer">
+                  <a
+                    href={
+                      selectedMap.source ??
+                      import.meta.env.BASE_URL + selectedMap.path
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     Open original image <ArrowUpRight size={10} />
                   </a>
                 </p>
@@ -455,7 +486,7 @@ function ZonePlanner({ active = true }) {
                 </div>
                 <p className="field-note">
                   Green faces fewer POIs; red faces more. Counts use{" "}
-                  {MAP_POIS.length} named POIs mapped from your image, not live
+                  {pois.length} named POIs mapped from your image, not live
                   player locations.
                 </p>
               </div>
@@ -624,7 +655,11 @@ function ZonePlanner({ active = true }) {
                   </defs>
                   {mapImage ? (
                     <>
-                      <rect width="1000" height="1000" fill="#c7d7d6" />
+                      <rect
+                        width="1000"
+                        height="1000"
+                        fill={mapId === DEFAULT_MAP_ID ? "#c7d7d6" : "#2f3237"}
+                      />
                       <image
                         data-map-image="true"
                         href={mapImage}
@@ -796,7 +831,7 @@ function ZonePlanner({ active = true }) {
                   )}
                   {forecast && showSides && (
                     <g data-testid="poi-markers">
-                      {MAP_POIS.map((poi) => (
+                      {pois.map((poi) => (
                         <circle
                           key={poi.name}
                           data-testid="poi-marker"

@@ -19,3 +19,22 @@ export const MAP_POIS = Object.freeze(
     { name: "Cluster Coast", x: 671, y: 799 },
   ].map((poi) => Object.freeze(poi)),
 );
+
+// Label anchors from the user's 786 × 809 Nightmare Island screenshot.
+// SVG images fit inside the square map; include its horizontal letterboxing.
+export const NIGHTMARE_POIS = Object.freeze(
+  [
+    ["Terror Turrets", 242, 190],
+    ["Estranged Estate", 429, 235],
+    ["Gravey Gates", 159, 325],
+    ["Creepy Cabins", 549, 340],
+    ["Haunted Hamlet", 354, 409],
+    ["Leech Lake", 254, 484],
+    ["Revenge Reels", 493, 487],
+    ["Punishment Patch", 239, 586],
+    ["Spooky Suburbs", 560, 615],
+    ["Retail Ruin", 350, 684],
+  ].map(([name, x, y]) =>
+    Object.freeze({ name, x: ((x + 11.5) / 809) * 1000, y: (y / 809) * 1000 }),
+  ),
+);

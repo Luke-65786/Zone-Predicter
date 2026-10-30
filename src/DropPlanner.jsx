@@ -15,6 +15,7 @@ import useSavedState from "./useSavedState.js";
 import { uid } from "./competition.js";
 import {
   DROP_PHYSICS_FIELDS,
+  DROP_MAP_KEYS,
   DEFAULT_DROP_PHYSICS,
   blankDrop,
   estimateDrop,
@@ -23,6 +24,9 @@ import {
 } from "./drop-model.js";
 import { Field, Metric, StorageNote, ToolPage } from "./ToolUI.jsx";
 import DropMapCanvas from "./DropMapCanvas.jsx";
+import MapSelector from "./MapSelector.jsx";
+import { switchIsland } from "./map-layouts.js";
+import { normalizeMapId } from "./map-source.js";
 
 const steps = [
   { id: "start", label: "Bus start", hint: "Where the bus enters your map" },
@@ -54,10 +58,12 @@ export default function DropPlanner({ plans = [] }) {
     () => Object.keys(readDropPhysics(drop.physics).errors).length > 0,
   );
   const svgRef = useRef(null);
-  const map = useCurrentMap();
+  const map = useCurrentMap(drop.mapId);
   const result = useMemo(() => estimateDrop(drop), [drop]);
   const physicsErrors = readDropPhysics(drop.physics).errors;
-  const landingPlans = plans.filter((plan) => plan.landing);
+  const landingPlans = plans.filter(
+    (plan) => plan.landing && normalizeMapId(plan.mapId) === drop.mapId,
+  );
   const ready = result.status === "ready";
   function patch(values) {
     setMessage("");
@@ -235,6 +241,15 @@ export default function DropPlanner({ plans = [] }) {
       <div className="comp-columns drop-columns">
         <div className="comp-stack">
           <section className="card comp-card">
+            <MapSelector
+              value={drop.mapId}
+              onChange={(mapId) => {
+                patch(switchIsland(drop, mapId, blankDrop(), DROP_MAP_KEYS));
+                setUndo(null);
+                setPlanId("");
+                setTool("start");
+              }}
+            />
             <div className="comp-section-heading">
               <h2>Build your approach</h2>
               <span className="comp-pill">3 MAP CLICKS</span>
@@ -426,6 +441,7 @@ export default function DropPlanner({ plans = [] }) {
             </div>
             {map.status === "ready" ? (
               <DropMapCanvas
+                key={drop.mapId}
                 mapUrl={map.url}
                 drop={drop}
                 result={result}

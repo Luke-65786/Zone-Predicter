@@ -1,3 +1,19 @@
+import { DEFAULT_MAP_ID, normalizeMapId } from "./map-source.js";
+import { normalizeLayouts } from "./map-layouts.js";
+export const PLAN_MAP_KEYS = [
+  "landing",
+  "backup",
+  "loot",
+  "rotation",
+  "positions",
+];
+const normalizePlanLayout = (p) => ({
+  landing: point(p.landing),
+  backup: point(p.backup),
+  loot: points(p.loot, 300),
+  rotation: points(p.rotation, 300),
+  positions: points(p.positions, 50),
+});
 export const integer = (raw, min = 0, max = 1_000_000) => {
   const text = String(raw ?? "").trim();
   const value = Number(text);
@@ -27,6 +43,8 @@ const points = (value, limit) =>
   Array.isArray(value) ? value.slice(0, limit).map(point).filter(Boolean) : [];
 
 export const blankPlan = () => ({
+  mapId: DEFAULT_MAP_ID,
+  mapLayouts: {},
   id: uid(),
   name: "",
   date: "",
@@ -47,6 +65,12 @@ export function normalizePlans(raw) {
         .slice(0, 50)
         .filter((p) => p && typeof p.id === "string" && p.id.length <= 80)
         .map((p) => ({
+          mapId: normalizeMapId(p.mapId),
+          mapLayouts: normalizeLayouts(
+            p.mapLayouts,
+            normalizePlanLayout,
+            PLAN_MAP_KEYS,
+          ),
           id: p.id,
           name: text(p.name, 80),
           date: /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : "",

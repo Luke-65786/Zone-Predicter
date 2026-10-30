@@ -1,23 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
-import { BUNDLED_MAP_PATH, MAP_SOURCE_URL } from "./map-source.js";
+import { getMap, DEFAULT_MAP_ID } from "./map-source.js";
 
-export default function useCurrentMap() {
+export default function useCurrentMap(mapId = DEFAULT_MAP_ID) {
   const [revision, setRevision] = useState(0);
   const [map, setMap] = useState({
+    mapId,
     status: "loading",
     url: null,
     loadedAt: null,
   });
   useEffect(() => {
     let active = true;
-    const urls = [import.meta.env.BASE_URL + BUNDLED_MAP_PATH, MAP_SOURCE_URL];
+    const selected = getMap(mapId);
+    const urls = [
+      import.meta.env.BASE_URL + selected.path,
+      selected.source,
+    ].filter(Boolean);
     let currentImage;
     let timeout;
-    setMap({ status: "loading", url: null, loadedAt: null });
+    setMap({ mapId, status: "loading", url: null, loadedAt: null });
     function load(index) {
       if (!active) return;
       if (index >= urls.length) {
-        setMap({ status: "error", url: null, loadedAt: null });
+        setMap({ mapId, status: "error", url: null, loadedAt: null });
         return;
       }
       const image = new Image();
@@ -31,6 +36,7 @@ export default function useCurrentMap() {
         if (!active) return;
         if (success && image.naturalWidth && image.naturalHeight) {
           setMap({
+            mapId,
             status: "ready",
             url: urls[index],
             loadedAt: new Date().toISOString(),
@@ -48,7 +54,11 @@ export default function useCurrentMap() {
       clearTimeout(timeout);
       if (currentImage) currentImage.onload = currentImage.onerror = null;
     };
-  }, [revision]);
+  }, [revision, mapId]);
   const refresh = useCallback(() => setRevision((value) => value + 1), []);
-  return { ...map, refresh };
+  return {
+    ...map,
+    ...(map.mapId !== mapId ? { status: "loading", url: null } : {}),
+    refresh,
+  };
 }
